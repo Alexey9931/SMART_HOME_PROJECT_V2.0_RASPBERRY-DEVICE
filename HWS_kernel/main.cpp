@@ -71,17 +71,32 @@ void poolingDevice(std::string srcAddr, std::string devAddr) {
 
     while (true)
     {
-        if (sharedMemory.shMemoryStruct.device[deviceID].typeCmd() != 1) {
-            std::cout << "Type cmd is correct! Device's name is " << sharedMemory.shMemoryStruct.device[deviceID].devRegsSpace.deviceName << std::endl;
-            sharedMemory.shMemoryStruct.device[deviceID].isInit = true;
-        } else {
-            std::cout << "Type cmd is failed!" << std::endl;
-            sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
-            close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd);
-            break;
-        }
-        sharedMemory.copyToSharedMemory();
-        
+        uint8_t cmdResult = sharedMemory.shMemoryStruct.device[deviceID].typeCmd();
+        switch (cmdResult) {
+            case NO_ERROR:
+                std::cout << "Type cmd is correct! Device's name is " << sharedMemory.shMemoryStruct.device[deviceID].devRegsSpace.deviceName << std::endl;
+                sharedMemory.shMemoryStruct.device[deviceID].isInit = true;
+                sharedMemory.copyToSharedMemory();
+                break;
+            case TX_ERROR: case RX_ERROR:
+                std::cout << "Type cmd is failed! Connection error! Attemp to reconnect... " << std::endl;
+                sharedMemory.shMemoryStruct.device[deviceID].isInit = false;  
+                sharedMemory.copyToSharedMemory(); 
+                close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd);
+                if ((sharedMemory.shMemoryStruct.device[deviceID].socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                    std::cout << "Socket creation error!" << std::endl;
+                }
+                setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+                if (connect(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+                    std::cout << "Error connection!" << std::endl;
+                }             
+                break;
+            case PACK_ERROR:
+                std::cout << "Type cmd is failed! Pack error!" << std::endl;
+                sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
+                sharedMemory.copyToSharedMemory();
+                break;
+        }      
         sleep(1);
     }  
     close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd);

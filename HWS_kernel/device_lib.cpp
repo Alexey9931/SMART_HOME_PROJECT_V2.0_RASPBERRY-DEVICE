@@ -12,7 +12,7 @@ uint8_t Device::writeCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
         std::cout << "Sent error!" << std::endl;
-        return 1;
+        return TX_ERROR;
     }
 
     numTxPack++;
@@ -20,23 +20,23 @@ uint8_t Device::writeCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
         std::cout << "Receive error!" << std::endl;
-        return 1;
+        return RX_ERROR;
     }
 
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     if ((requestReplyIterat.rxDataSize != 1) || (requestReplyIterat.rxPackFrame.data[0] != WRITE_CMD)) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     numRxPack++;
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint8_t Device::_writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack) {
+void Device::_writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack) {
     memcpy(iterationPack.txPackFrame.data, &regAddr, sizeof(regAddr));
     memcpy(iterationPack.txPackFrame.data + sizeof(regAddr), &valueSize, sizeof(valueSize));
     memcpy(iterationPack.txPackFrame.data + sizeof(regAddr) + sizeof(valueSize), value, valueSize);
@@ -50,8 +50,6 @@ uint8_t Device::_writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, 
         sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
 
     iterationPack.makeTxPack();
-
-    return 0;
 }
 
 uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
@@ -66,7 +64,7 @@ uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
         std::cout << "Sent error!" << std::endl;
-        return 1;
+        return TX_ERROR;
     }
 
     numTxPack++;
@@ -74,25 +72,25 @@ uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + valueSize);
     if (len < 0) {
         std::cout << "Receive error!" << std::endl;
-        return 1;
+        return RX_ERROR;
     }
 
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     if (requestReplyIterat.rxDataSize != valueSize) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     numRxPack++;
 
     memcpy(value, requestReplyIterat.rxPackFrame.data, valueSize);
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint8_t Device::_readReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, uint16_t valueSize, ModbusPack& iterationPack) {
+void Device::_readReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, uint16_t valueSize, ModbusPack& iterationPack) {
     memcpy(iterationPack.txPackFrame.data, &regAddr, sizeof(regAddr));
     memcpy(iterationPack.txPackFrame.data + sizeof(regAddr), &valueSize, sizeof(valueSize));
     
@@ -105,8 +103,6 @@ uint8_t Device::_readReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, u
         sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
 
     iterationPack.makeTxPack();
-
-    return 0;
 }
 
 uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
@@ -121,7 +117,7 @@ uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
         std::cout << "Sent error!" << std::endl;
-        return 1;
+        return TX_ERROR;
     }
 
     numTxPack++;
@@ -129,23 +125,23 @@ uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
         std::cout << "Receive error!" << std::endl;
-        return 1;
+        return RX_ERROR;
     }
 
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     if ((requestReplyIterat.rxDataSize != 1) || (requestReplyIterat.rxPackFrame.data[0] != CONFIG_CMD)) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     numRxPack++;
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint8_t Device::_config(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack) {
+void Device::_config(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack) {
     memcpy(iterationPack.txPackFrame.data, &regAddr, sizeof(regAddr));
     memcpy(iterationPack.txPackFrame.data + sizeof(regAddr), &valueSize, sizeof(valueSize));
     memcpy(iterationPack.txPackFrame.data + sizeof(regAddr) + sizeof(valueSize), value, valueSize);
@@ -159,8 +155,6 @@ uint8_t Device::_config(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, vo
         sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
 
     iterationPack.makeTxPack();
-
-    return 0;
 }
 
 uint8_t Device::resetCmd(void) {
@@ -175,7 +169,7 @@ uint8_t Device::resetCmd(void) {
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
         std::cout << "Sent error!" << std::endl;
-        return 1;
+        return TX_ERROR;
     }
 
     numTxPack++;
@@ -183,23 +177,23 @@ uint8_t Device::resetCmd(void) {
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
         std::cout << "Receive error!" << std::endl;
-        return 1;
+        return RX_ERROR;
     }
 
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     if ((requestReplyIterat.rxDataSize != 1) || (requestReplyIterat.rxPackFrame.data[0] != RESET_CMD)) {
-        return 1; 
+        return PACK_ERROR; 
     }
 
     numRxPack++;
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint8_t Device::_reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack) {
+void Device::_reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack) {
     memset(iterationPack.txPackFrame.data, RESET_CMD, 1);
     iterationPack.txDataSize = 1;
 
@@ -210,8 +204,6 @@ uint8_t Device::_reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iteration
         sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
 
     iterationPack.makeTxPack();
-
-    return 0;
 }
 
 uint8_t Device::typeCmd(void) {
@@ -226,28 +218,27 @@ uint8_t Device::typeCmd(void) {
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
         std::cout << "Sent error!" << std::endl;
-        return 1;
+        return TX_ERROR;
     }
     numTxPack++;
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace));
     if (len < 0) {
         std::cout << "Receive error!" << std::endl;
-        return 1;
+        return RX_ERROR;
     }
 
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
-        return 1; 
+        return PACK_ERROR; 
     }
     numRxPack++;
     
     memcpy(&devRegsSpace, requestReplyIterat.rxPackFrame.data, requestReplyIterat.rxDataSize);
-    //deviceName.assign((char*)requestReplyIterat.rxPackFrame.data, requestReplyIterat.rxDataSize);
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint8_t Device::_type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack) {
+void Device::_type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack) {
     memset(iterationPack.txPackFrame.data, TYPE_CMD, 1);
     iterationPack.txDataSize = 1;
 
@@ -258,8 +249,6 @@ uint8_t Device::_type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationP
         sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
 
     iterationPack.makeTxPack();
-
-    return 0;
 }
 
 uint8_t Device::deviceAddrFromIP(std::string devAddr) {

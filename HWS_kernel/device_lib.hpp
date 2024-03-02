@@ -7,6 +7,12 @@
 #include <unistd.h>
 #include <string.h>
 
+//Errors
+#define NO_ERROR    0
+#define TX_ERROR    1
+#define RX_ERROR    2
+#define PACK_ERROR  3
+
 typedef struct deviceRegisterSpace {
     uint8_t     deviceName[32];
     uint8_t     ipAddr[4];
@@ -31,15 +37,15 @@ class Device {
         devRegs devRegsSpace;
 
         uint8_t writeCmd(uint16_t regAddr, void *value, uint16_t valueSize);
-        uint8_t _writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack);
+        void _writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack);
         uint8_t readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value);
-        uint8_t _readReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, uint16_t valueSize, ModbusPack& iterationPack);
+        void _readReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, uint16_t valueSize, ModbusPack& iterationPack);
         uint8_t configCmd(uint16_t regAddr, void *value, uint16_t valueSize);
-        uint8_t _config(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack);
+        void _config(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack);
         uint8_t resetCmd(void);
-        uint8_t _reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
+        void _reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
         uint8_t typeCmd(void);
-        uint8_t _type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
+        void _type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
         uint8_t deviceAddrFromIP(std::string devAddr);
 };
 

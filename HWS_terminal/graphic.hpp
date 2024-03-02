@@ -12,7 +12,8 @@
 class TerminalGraphic {
     public:
         TerminalGraphic();
-        std::vector<std::string> stringsMainMenu {"ПУСТО", "ПУСТО", "ПУСТО", "ПУСТО", "ПУСТО"};
+        std::vector<std::string> stringsMainMenu {"ПУСТО        ",
+         "ПУСТО        ", "ПУСТО        ", "ПУСТО        ", "ПУСТО        "};
         void printMainMenu(void);
         void printDeviceInfoWindow(Device device);
         void printBackgroundWindow(void);

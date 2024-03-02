@@ -17,7 +17,7 @@ std::string TerminalGraphic::convertIntToHex(int toConvert) {
 }
 
 void TerminalGraphic::printMainMenu(void) {
-    WINDOW *menuWindow = newwin(14, 27, 1, 2);
+    WINDOW *menuWindow = newwin(11, 27, 1, 2);
     box(menuWindow, 0, 0);
     refresh();
     mvwprintw(menuWindow, 0, 5, "УСТРОЙСТВА В СЕТИ");
@@ -28,6 +28,7 @@ void TerminalGraphic::printMainMenu(void) {
     wrefresh(menuWindow);
     int highlight = 0;
     while (1) {
+        sharedMemory.copyFromSharedMemory();
         for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
             if (i == highlight) {
                 wattron(menuWindow, A_STANDOUT);
@@ -35,11 +36,14 @@ void TerminalGraphic::printMainMenu(void) {
             if (sharedMemory.shMemoryStruct.device[i].isInit == true) {
                 stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName, 
                     sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName));
-            } else {
-                stringsMainMenu[i] = "ПУСТО";
+            } else {                
+                stringsMainMenu[i] = "ПУСТО        ";
+                memset(&sharedMemory.shMemoryStruct.device[i].devRegsSpace, 0, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace));
+                sharedMemory.copyToSharedMemory();
             }
             mvwprintw(menuWindow, 1 + i, 1, ("-" + std::to_string(i+1) + "- " + stringsMainMenu[i]).c_str()); 
             wattroff(menuWindow, A_STANDOUT);
+            refresh();
         }
         switch (wgetch(menuWindow)) {
             case KEY_DOWN:
@@ -53,7 +57,6 @@ void TerminalGraphic::printMainMenu(void) {
                     highlight = 0;
                 break;
             case 10:    /*Enter*/
-                sharedMemory.copyFromSharedMemory();
                 printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
                 break;
         }
@@ -61,44 +64,49 @@ void TerminalGraphic::printMainMenu(void) {
 }
 
 void TerminalGraphic::printDeviceInfoWindow(Device device) {
-    WINDOW *deviceInfoWindow = newwin(20, 40, 1, 30);
+    WINDOW *deviceInfoWindow = newwin(11, 40, 1, 30);
     box(deviceInfoWindow, 0, 0);
     refresh();
     mvwprintw(deviceInfoWindow, 0, 2, "ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ");
     mvwprintw(deviceInfoWindow, 1, 1, "Описание: ");
-    mvwprintw(deviceInfoWindow, 1, 15, (char*)device.devRegsSpace.deviceName);
-    mvwprintw(deviceInfoWindow, 2, 1, "IP адрес у-ва: ");
-    mvwprintw(deviceInfoWindow, 2, 20, 
+    if(strstr((char*)device.devRegsSpace.deviceName, "Control Panel")) {
+        mvwprintw(deviceInfoWindow, 1, 15, "Панель управления");
+        mvwprintw(deviceInfoWindow, 2, 15, "системой \"УМНЫЙ ДОМ\"");
+    } else {
+
+    }
+    mvwprintw(deviceInfoWindow, 3, 1, "IP адрес у-ва: ");
+    mvwprintw(deviceInfoWindow, 3, 20, 
         (std::to_string(device.devRegsSpace.ipAddr[0]) + "." + 
         std::to_string(device.devRegsSpace.ipAddr[1]) + "." + 
         std::to_string(device.devRegsSpace.ipAddr[2]) + "." +
         std::to_string(device.devRegsSpace.ipAddr[3])).c_str());
-    mvwprintw(deviceInfoWindow, 3, 1, "MAC адрес у-ва: ");
-    mvwprintw(deviceInfoWindow, 3, 20, 
+    mvwprintw(deviceInfoWindow, 4, 1, "MAC адрес у-ва: ");
+    mvwprintw(deviceInfoWindow, 4, 20, 
         (convertIntToHex(device.devRegsSpace.macAddr[0]) + "." + 
         convertIntToHex(device.devRegsSpace.macAddr[1]) + "." + 
         convertIntToHex(device.devRegsSpace.macAddr[2]) + "." +
         convertIntToHex(device.devRegsSpace.macAddr[3]) + "." +
         convertIntToHex(device.devRegsSpace.macAddr[4]) + "." +
         convertIntToHex(device.devRegsSpace.macAddr[5])).c_str());
-    mvwprintw(deviceInfoWindow, 4, 1, "IP адрес маршр-ра: ");
-    mvwprintw(deviceInfoWindow, 4, 20, 
+    mvwprintw(deviceInfoWindow, 5, 1, "IP адрес маршр-ра: ");
+    mvwprintw(deviceInfoWindow, 5, 20, 
         (std::to_string(device.devRegsSpace.ipGate[0]) + "." + 
         std::to_string(device.devRegsSpace.ipGate[1]) + "." + 
         std::to_string(device.devRegsSpace.ipGate[2]) + "." +
         std::to_string(device.devRegsSpace.ipGate[3])).c_str());
-    mvwprintw(deviceInfoWindow, 5, 1, "Маска подсети: ");
-    mvwprintw(deviceInfoWindow, 5, 20, 
+    mvwprintw(deviceInfoWindow, 6, 1, "Маска подсети: ");
+    mvwprintw(deviceInfoWindow, 6, 20, 
         (std::to_string(device.devRegsSpace.ipMask[0]) + "." + 
         std::to_string(device.devRegsSpace.ipMask[1]) + "." + 
         std::to_string(device.devRegsSpace.ipMask[2]) + "." +
         std::to_string(device.devRegsSpace.ipMask[3])).c_str());
-    mvwprintw(deviceInfoWindow, 6, 1, "Порт соединения: ");
-    mvwprintw(deviceInfoWindow, 6, 20, std::to_string(device.devRegsSpace.localPort).c_str());
-    mvwprintw(deviceInfoWindow, 7, 1, "Кол-во отправленных пакетов: ");
-    mvwprintw(deviceInfoWindow, 7, 30, std::to_string(device.devRegsSpace.numTxPack).c_str());
-    mvwprintw(deviceInfoWindow, 8, 1, "Кол-во принятых пакетов: ");
-    mvwprintw(deviceInfoWindow, 8, 30, std::to_string(device.devRegsSpace.numRxPack).c_str());
+    mvwprintw(deviceInfoWindow, 7, 1, "Порт соединения: ");
+    mvwprintw(deviceInfoWindow, 7, 20, std::to_string(device.devRegsSpace.localPort).c_str());
+    mvwprintw(deviceInfoWindow, 8, 1, "Кол-во отправленных пакетов: ");
+    mvwprintw(deviceInfoWindow, 8, 30, std::to_string(device.devRegsSpace.numTxPack).c_str());
+    mvwprintw(deviceInfoWindow, 9, 1, "Кол-во принятых пакетов: ");
+    mvwprintw(deviceInfoWindow, 9, 30, std::to_string(device.devRegsSpace.numRxPack).c_str());
     wrefresh(deviceInfoWindow);
 }
 
