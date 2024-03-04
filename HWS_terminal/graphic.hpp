@@ -16,6 +16,7 @@ class TerminalGraphic {
          "ПУСТО        ", "ПУСТО        ", "ПУСТО        ", "ПУСТО        "};
         void printMainMenu(void);
         void printDeviceInfoWindow(Device device);
+        void printDeviceDataWindow(Device device);
         void printBackgroundWindow(void);
     private:
         std::string convertIntToHex(int toConvert);

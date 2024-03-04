@@ -13,6 +13,16 @@
 #define RX_ERROR    2
 #define PACK_ERROR  3
 
+typedef struct deviceSystemTime {
+    uint8_t     seconds;
+    uint8_t     minutes;
+    uint8_t     hour;
+    uint8_t     dayOfWeak;
+    uint8_t     dayOfMonth;
+    uint8_t     month;
+    uint8_t     year;
+}__attribute__((packed)) devSysTime;
+
 typedef struct deviceRegisterSpace {
     uint8_t     deviceName[32];
     uint8_t     ipAddr[4];
@@ -22,6 +32,10 @@ typedef struct deviceRegisterSpace {
     uint32_t    localPort;
     int         numRxPack;
     int         numTxPack;
+    devSysTime  sysTime;
+    float       temperature;
+    float       humidity;
+    float       pressure;
 }__attribute__((packed)) devRegs;
 
 class Device {

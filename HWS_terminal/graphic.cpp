@@ -58,6 +58,7 @@ void TerminalGraphic::printMainMenu(void) {
                 break;
             case 10:    /*Enter*/
                 printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
+                printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);
                 break;
         }
     }
@@ -107,6 +108,28 @@ void TerminalGraphic::printDeviceInfoWindow(Device device) {
     mvwprintw(deviceInfoWindow, 8, 30, std::to_string(device.devRegsSpace.numTxPack).c_str());
     mvwprintw(deviceInfoWindow, 9, 1, "Кол-во принятых пакетов: ");
     mvwprintw(deviceInfoWindow, 9, 30, std::to_string(device.devRegsSpace.numRxPack).c_str());
+    wrefresh(deviceInfoWindow);
+}
+
+void TerminalGraphic::printDeviceDataWindow(Device device) {
+    WINDOW *deviceInfoWindow = newwin(6, 40, 12, 30);
+    box(deviceInfoWindow, 0, 0);
+    refresh();
+    mvwprintw(deviceInfoWindow, 0, 2, "ДАННЫЕ УСТРОЙСТВА");
+    mvwprintw(deviceInfoWindow, 1, 1, "Системное время:");
+    mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.devRegsSpace.sysTime.hour) + ":" + 
+        std::to_string(device.devRegsSpace.sysTime.minutes) + ":" + 
+        std::to_string(device.devRegsSpace.sysTime.seconds) + " " +
+        std::to_string(device.devRegsSpace.sysTime.dayOfMonth) + "/" +
+        std::to_string(device.devRegsSpace.sysTime.month) + "/20" +
+        std::to_string(device.devRegsSpace.sysTime.year)).c_str());
+    mvwprintw(deviceInfoWindow, 2, 1, "Температура:");
+    mvwprintw(deviceInfoWindow, 2, 15, (std::to_string(device.devRegsSpace.temperature) + "°C").c_str());
+    mvwprintw(deviceInfoWindow, 3, 1, "Влажность:");
+    mvwprintw(deviceInfoWindow, 3, 15, (std::to_string(device.devRegsSpace.humidity) + "%%").c_str());
+    mvwprintw(deviceInfoWindow, 4, 1, "Атм.давление:");
+    mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.devRegsSpace.pressure) + "мм.рт.ст.").c_str());
+
     wrefresh(deviceInfoWindow);
 }
 
