@@ -11,14 +11,13 @@ int main()
     TerminalGraphic terminal;
 
     terminal.printBackgroundWindow();
-    //terminal.printDeviceInfoWindow();
     terminal.printMainMenu();
+
 
     getch();
     endwin();
-
     sharedMemory.closeSharedMemory();
-
+ 
     return 0;
 }
 

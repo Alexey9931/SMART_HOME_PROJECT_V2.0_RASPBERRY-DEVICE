@@ -17,6 +17,7 @@ std::string TerminalGraphic::convertIntToHex(int toConvert) {
 }
 
 void TerminalGraphic::printMainMenu(void) {
+    findServerIp();
     WINDOW *menuWindow = newwin(11, 27, 1, 2);
     box(menuWindow, 0, 0);
     refresh();
@@ -27,6 +28,9 @@ void TerminalGraphic::printMainMenu(void) {
     }
     wrefresh(menuWindow);
     int highlight = 0;
+    std::thread buttonHandler([&]() {
+        buttonListener(menuWindow, highlight);
+    });
     while (1) {
         sharedMemory.copyFromSharedMemory();
         for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
@@ -34,8 +38,7 @@ void TerminalGraphic::printMainMenu(void) {
                 wattron(menuWindow, A_STANDOUT);
             }
             if (sharedMemory.shMemoryStruct.device[i].isInit == true) {
-                stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName, 
-                    sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName));
+                stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName));
             } else {                
                 stringsMainMenu[i] = "ПУСТО        ";
                 memset(&sharedMemory.shMemoryStruct.device[i].devRegsSpace, 0, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace));
@@ -43,9 +46,19 @@ void TerminalGraphic::printMainMenu(void) {
             }
             mvwprintw(menuWindow, 1 + i, 1, ("-" + std::to_string(i+1) + "- " + stringsMainMenu[i]).c_str()); 
             wattroff(menuWindow, A_STANDOUT);
-            refresh();
-        }
-        switch (wgetch(menuWindow)) {
+            wrefresh(menuWindow);
+        } 
+        printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
+        printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);   
+        printServerInfoWindow();
+        usleep(100000);
+    } 
+    buttonHandler.join();  
+}
+
+void TerminalGraphic::buttonListener(WINDOW *window, int &highlight) {
+    while(1) {
+        switch (wgetch(window)) {
             case KEY_DOWN:
                 highlight++;
                 if (highlight == 5)
@@ -56,12 +69,12 @@ void TerminalGraphic::printMainMenu(void) {
                 if (highlight == -1)
                     highlight = 0;
                 break;
-            case 10:    /*Enter*/
-                printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
-                printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);
-                break;
-        }
-    }
+            // case 10:    /*Enter*/
+            //     printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
+            //     printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);
+            //     break;
+        } 
+    }     
 }
 
 void TerminalGraphic::printDeviceInfoWindow(Device device) {
@@ -117,12 +130,17 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
     refresh();
     mvwprintw(deviceInfoWindow, 0, 2, "ДАННЫЕ УСТРОЙСТВА");
     mvwprintw(deviceInfoWindow, 1, 1, "Системное время:");
-    mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.devRegsSpace.sysTime.hour) + ":" + 
-        std::to_string(device.devRegsSpace.sysTime.minutes) + ":" + 
-        std::to_string(device.devRegsSpace.sysTime.seconds) + " " +
-        std::to_string(device.devRegsSpace.sysTime.dayOfMonth) + "/" +
-        std::to_string(device.devRegsSpace.sysTime.month) + "/20" +
-        std::to_string(device.devRegsSpace.sysTime.year)).c_str());
+    char date[20];
+    sprintf(date, "%02d:%02d:%02d %02d/%02d/20%02d", device.devRegsSpace.sysTime.hour, device.devRegsSpace.sysTime.minutes, 
+        device.devRegsSpace.sysTime.seconds, device.devRegsSpace.sysTime.dayOfMonth, device.devRegsSpace.sysTime.month, 
+        device.devRegsSpace.sysTime.year);
+    // mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.devRegsSpace.sysTime.hour) + ":" + 
+    //     std::to_string(device.devRegsSpace.sysTime.minutes) + ":" + 
+    //     std::to_string(device.devRegsSpace.sysTime.seconds) + " " +
+    //     std::to_string(device.devRegsSpace.sysTime.dayOfMonth) + "/" +
+    //     std::to_string(device.devRegsSpace.sysTime.month) + "/20" +
+    //     std::to_string(device.devRegsSpace.sysTime.year)).c_str());
+    mvwprintw(deviceInfoWindow, 1, 18, date);
     mvwprintw(deviceInfoWindow, 2, 1, "Температура:");
     mvwprintw(deviceInfoWindow, 2, 15, (std::to_string(device.devRegsSpace.temperature) + "°C").c_str());
     mvwprintw(deviceInfoWindow, 3, 1, "Влажность:");
@@ -133,6 +151,25 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
     wrefresh(deviceInfoWindow);
 }
 
+void TerminalGraphic::printServerInfoWindow(void) {
+    char date[20];
+    time_t rawtime;
+    struct tm * timeinfo;
+    WINDOW *serverInfoWindow = newwin(6, 27, 12, 2);
+    box(serverInfoWindow, 0, 0);
+    refresh();
+    mvwprintw(serverInfoWindow, 0, 2, "ИНФОРМАЦИЯ О СЕРВЕРЕ");
+    mvwprintw(serverInfoWindow, 1, 1, "Системное время:");
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(date, 20, "%H:%M:%S %d/%m/%Y", timeinfo); // форматируем строку времени
+    mvwprintw(serverInfoWindow, 2, 1, date);
+    mvwprintw(serverInfoWindow, 3, 1, "IP адрес сервера: ");
+    mvwprintw(serverInfoWindow, 4, 1, (char*)ip_address);
+
+    wrefresh(serverInfoWindow);
+}
+
 void TerminalGraphic::printBackgroundWindow(void) {
     setlocale(LC_ALL,"");
     initscr(); 
@@ -140,13 +177,39 @@ void TerminalGraphic::printBackgroundWindow(void) {
     cbreak();   
     curs_set(0);    
     // Измеряем размер экрана в рядах и колонках
-    int height, width;
-    getmaxyx(stdscr, height, width);
+    // int height, width;
+    // getmaxyx(stdscr, height, width);
 
-    WINDOW *main_win = newwin(height, width, 0, 0);
+    // WINDOW *main_win = newwin(height, width, 0, 0);
+    WINDOW *main_win = newwin(19, 72, 0, 0);
     box(main_win, 0, 0);
     refresh();
     // move and print in window
     mvwprintw(main_win, 0, 25, "ПАНЕЛЬ УПРАВЛЕНИЯ СИСТЕМОЙ \"УМНЫЙ ДОМ\"");
     wrefresh(main_win);
+}
+
+void TerminalGraphic::findServerIp(void) {
+    int fd;
+    struct ifreq ifr;
+
+    /*AF_INET - to define network interface IPv4*/
+    /*Creating soket for it.*/
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /*AF_INET - to define IPv4 Address type.*/
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /*eth0 - define the ifr_name - port name
+    where network attached.*/
+    memcpy(ifr.ifr_name, "enp0s3", IFNAMSIZ - 1);
+
+    /*Accessing network interface information by
+    passing address using ioctl.*/
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    /*closing fd*/
+    close(fd);
+
+    /*Extract IP Address*/
+    strcpy((char*)ip_address, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
 }
