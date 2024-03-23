@@ -5,10 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
+			"name": "Remote GDB",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/debug/hws_kernel",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": true,
+			"MIMode": "gdb",
+			"miDebuggerServerAddress": "192.168.1.223:9091",
+			"miDebuggerPath": "/usr/bin/gdb-multiarch",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": false
+				}
+			]
+		},
+        {
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/hws_kernel",
+            "program": "${workspaceRoot}/build/debug/hws_kernel",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

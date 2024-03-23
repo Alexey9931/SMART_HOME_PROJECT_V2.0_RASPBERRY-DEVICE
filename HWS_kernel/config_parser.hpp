@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <cstdint>
 
 typedef std::pair<std::string, std::list<std::pair<std::string, std::string>>> ConfigEntry;
 

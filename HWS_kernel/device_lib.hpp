@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
+#include <cstdint>
 
 //Errors
 #define NO_ERROR    0
@@ -25,10 +26,12 @@ typedef struct deviceSystemTime {
 
 typedef struct deviceRegisterSpace {
     uint8_t     deviceName[32];
-    uint8_t     ipAddr[4];
+    uint8_t     ipAddr1[4];
+    uint8_t     ipAddr2[4];
     uint8_t     ipGate[4];
     uint8_t     ipMask[4];
-    uint8_t     macAddr[6];
+    uint8_t     macAddr1[6];
+    uint8_t     macAddr2[6];
     uint32_t    localPort;
     int         numRxPack;
     int         numTxPack;

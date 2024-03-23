@@ -13,8 +13,11 @@ uint8_t SharedMemory::openSharedMemory(bool isClient) {
     return 0;
 }
 
-void SharedMemory::closeSharedMemory(void) {
-    close(shmFd);
+uint8_t SharedMemory::closeSharedMemory(void) {
+    if (close(shmFd) < 0) {
+        return 1;
+    }
+    return 0;
 }
 
 uint8_t SharedMemory::copyToSharedMemory(void) {

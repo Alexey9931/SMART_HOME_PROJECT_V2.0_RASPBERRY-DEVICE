@@ -4,19 +4,28 @@ extern SharedMemory sharedMemory;
 
 int main()
 {
-    sharedMemory.openSharedMemory(true);
-    sharedMemory.copyFromSharedMemory();
+    Logger log("smhometerminal", "/usr/local/sm_home/smhometerminal.log", "a");
+    log.systemlog(LOG_INFO, "SmartHomeTerminal has been succesfully started!");
+
+    if (sharedMemory.openSharedMemory(true)) {
+        log.systemlog(LOG_ERR, "Error to open shared memory!");
+    }
+    if (sharedMemory.copyFromSharedMemory()) {
+        log.systemlog(LOG_ERR, "Error to copy data from shared memory!");
+    }
     
 
     TerminalGraphic terminal;
 
     terminal.printBackgroundWindow();
-    terminal.printMainMenu();
+    terminal.printMainMenu(log);
 
 
     getch();
     endwin();
-    sharedMemory.closeSharedMemory();
+    if (sharedMemory.closeSharedMemory()) {
+        log.systemlog(LOG_ERR, "Error to close shared memory!");
+    }
  
     return 0;
 }

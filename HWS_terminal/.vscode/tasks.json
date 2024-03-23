@@ -3,8 +3,11 @@
 	"tasks": [
 		{
 			"label": "build",
-			"type": "shell",
-			"command": "make"
+			"command": "make",
+			"args": [
+                "${workspaceFolder}/Makefile",
+                "all"
+            ]
 		}
 	]
 }

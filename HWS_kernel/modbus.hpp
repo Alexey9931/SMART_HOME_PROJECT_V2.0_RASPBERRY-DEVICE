@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <cstdint>
 
 #define BUF_LEN     1024
 #define PACK_HEADER 0x55

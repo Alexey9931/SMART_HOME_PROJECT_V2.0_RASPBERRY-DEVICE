@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/hws_terminal",
+            "program": "${workspaceRoot}/build/debug/hws_terminal",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

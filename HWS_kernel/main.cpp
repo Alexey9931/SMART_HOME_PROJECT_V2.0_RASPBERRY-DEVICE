@@ -6,25 +6,28 @@ extern SharedMemory sharedMemory;
 
 int main()
 {
+    Logger log("smhomekernel", "/usr/local/sm_home/smhomekernel.log", "a");
+    log.systemlog(LOG_INFO, "SmartHomeKernel has been succesfully started!");
     // Парсинг конфигурационного файла
-    Parser configs_parser("configs.ini");
-    configs_parser.getIsOpened();
+    Parser configs_parser("/usr/local/sm_home/kernel_configs.ini");
+    if (!configs_parser.getIsOpened()) {
+        log.systemlog(LOG_ERR, "Unable to open config file!");
+        return 1;
+    }
     //NetMapBox net_map_box(configs_parser.parsed_configs);
-
     // Запуск основной задачи для опроса модулей
     std::thread devTask([&]() {
-        devicesTask(configs_parser.parsed_configs.back().second);
+        devicesTask(log, configs_parser.parsed_configs.back().second);
     });
     
     devTask.join();
     return 0;
 }
 
-void devicesTask(std::list<std::pair<std::string, std::string>> devicesConfigs) {
+void devicesTask(Logger & log, std::list<std::pair<std::string, std::string>> devicesConfigs) {
     std::string thisDevIP;
     std::string devIP;
     std::vector <std::thread> devicesTaskThread;
-    std::string delimeter = ".";
 
     for(auto deviceConfigs : devicesConfigs) {
          if (deviceConfigs.first == "THISDEVICE_IP") {
@@ -33,7 +36,7 @@ void devicesTask(std::list<std::pair<std::string, std::string>> devicesConfigs) 
             devIP = deviceConfigs.second;
             // Запуск потока для опроса каждого модуля
             devicesTaskThread.push_back(std::thread(std::thread([&](){
-                poolingDevice(thisDevIP, devIP);
+                poolingDevice(log, thisDevIP, devIP);
             })));
          }
     }
@@ -42,8 +45,10 @@ void devicesTask(std::list<std::pair<std::string, std::string>> devicesConfigs) 
     }
 }
 
-void poolingDevice(std::string srcAddr, std::string devAddr) {
-    sharedMemory.openSharedMemory(false);
+void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
+    if (sharedMemory.openSharedMemory(false)) {
+        log.systemlog(LOG_ERR, "Error to open shared memory!");
+    }
 
     uint8_t deviceID = sharedMemory.shMemoryStruct.deviceCounter;
     sharedMemory.shMemoryStruct.deviceCounter++;
@@ -60,13 +65,13 @@ void poolingDevice(std::string srcAddr, std::string devAddr) {
     tv.tv_sec = 5;
 
     if ((sharedMemory.shMemoryStruct.device[deviceID].socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cout << "Socket creation error!" << std::endl;
+        log.systemlog(LOG_ERR, "Socket creation error!");
     }
 
     setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
     if (connect(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        std::cout << "Error connection!" << std::endl;
+        log.systemlog(LOG_ERR, "Error connection!");
     }
 
     while (true)
@@ -74,31 +79,42 @@ void poolingDevice(std::string srcAddr, std::string devAddr) {
         uint8_t cmdResult = sharedMemory.shMemoryStruct.device[deviceID].typeCmd();
         switch (cmdResult) {
             case NO_ERROR:
-                std::cout << "Type cmd is correct! Device's name is " << sharedMemory.shMemoryStruct.device[deviceID].devRegsSpace.deviceName << std::endl;
                 sharedMemory.shMemoryStruct.device[deviceID].isInit = true;
-                sharedMemory.copyToSharedMemory();
+                if (sharedMemory.copyToSharedMemory()) {
+                   log.systemlog(LOG_ERR, "Error while copying data to shared memory!"); 
+                }
                 break;
             case TX_ERROR: case RX_ERROR:
-                std::cout << "Type cmd is failed! Connection error! Attemp to reconnect... " << std::endl;
+                log.systemlog(LOG_ERR, "Type cmd is failed! Connection error! Attemp to reconnect... ");
                 sharedMemory.shMemoryStruct.device[deviceID].isInit = false;  
-                sharedMemory.copyToSharedMemory(); 
-                close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd);
+                if (sharedMemory.copyToSharedMemory()) {
+                   log.systemlog(LOG_ERR, "Error while copying data to shared memory!"); 
+                }
+                if (close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd)) {
+                    log.systemlog(LOG_ERR, "Error to close shared memory!");
+                }
                 if ((sharedMemory.shMemoryStruct.device[deviceID].socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                    std::cout << "Socket creation error!" << std::endl;
+                    log.systemlog(LOG_ERR, "Socket creation error!");
                 }
                 setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
                 if (connect(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-                    std::cout << "Error connection!" << std::endl;
+                    log.systemlog(LOG_ERR, "Error connection!");
                 }             
                 break;
             case PACK_ERROR:
-                std::cout << "Type cmd is failed! Pack error!" << std::endl;
+                log.systemlog(LOG_ERR, "Type cmd is failed! Pack error!");
                 sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
-                sharedMemory.copyToSharedMemory();
+                if (sharedMemory.copyToSharedMemory()) {
+                   log.systemlog(LOG_ERR, "Error while copying data to shared memory!"); 
+                }
                 break;
         }      
         sleep(1);
     }  
-    close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd);
-    sharedMemory.closeSharedMemory();
+    if (close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd)) {
+        log.systemlog(LOG_ERR, "Error to close socket!");
+    }
+    if (sharedMemory.closeSharedMemory()) {
+        log.systemlog(LOG_ERR, "Error to close shared memory!");
+    }
 }

@@ -16,6 +16,8 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <cstdint>
+#include "log.hpp"
 
 class TerminalGraphic {
     public:
@@ -23,7 +25,7 @@ class TerminalGraphic {
         uint8_t ip_address[15];
         std::vector<std::string> stringsMainMenu {"ПУСТО        ",
          "ПУСТО        ", "ПУСТО        ", "ПУСТО        ", "ПУСТО        "};
-        void printMainMenu(void);
+        void printMainMenu(Logger &log);
         void printDeviceInfoWindow(Device device);
         void printDeviceDataWindow(Device device);
         void printBackgroundWindow(void);

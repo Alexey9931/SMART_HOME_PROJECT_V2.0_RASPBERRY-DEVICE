@@ -16,7 +16,7 @@ std::string TerminalGraphic::convertIntToHex(int toConvert) {
     return result;
 }
 
-void TerminalGraphic::printMainMenu(void) {
+void TerminalGraphic::printMainMenu(Logger &log) {
     findServerIp();
     WINDOW *menuWindow = newwin(11, 27, 1, 2);
     box(menuWindow, 0, 0);
@@ -32,7 +32,9 @@ void TerminalGraphic::printMainMenu(void) {
         buttonListener(menuWindow, highlight);
     });
     while (1) {
-        sharedMemory.copyFromSharedMemory();
+        if (sharedMemory.copyFromSharedMemory()) {
+            log.systemlog(LOG_ERR, "Error to copy data from shared memory!");
+        }
         for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
             if (i == highlight) {
                 wattron(menuWindow, A_STANDOUT);
@@ -42,7 +44,9 @@ void TerminalGraphic::printMainMenu(void) {
             } else {                
                 stringsMainMenu[i] = "ПУСТО        ";
                 memset(&sharedMemory.shMemoryStruct.device[i].devRegsSpace, 0, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace));
-                sharedMemory.copyToSharedMemory();
+                if (sharedMemory.copyToSharedMemory()) {
+                    log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
+                }
             }
             mvwprintw(menuWindow, 1 + i, 1, ("-" + std::to_string(i+1) + "- " + stringsMainMenu[i]).c_str()); 
             wattroff(menuWindow, A_STANDOUT);
@@ -91,18 +95,18 @@ void TerminalGraphic::printDeviceInfoWindow(Device device) {
     }
     mvwprintw(deviceInfoWindow, 3, 1, "IP адрес у-ва: ");
     mvwprintw(deviceInfoWindow, 3, 20, 
-        (std::to_string(device.devRegsSpace.ipAddr[0]) + "." + 
-        std::to_string(device.devRegsSpace.ipAddr[1]) + "." + 
-        std::to_string(device.devRegsSpace.ipAddr[2]) + "." +
-        std::to_string(device.devRegsSpace.ipAddr[3])).c_str());
+        (std::to_string(device.devRegsSpace.ipAddr1[0]) + "." + 
+        std::to_string(device.devRegsSpace.ipAddr1[1]) + "." + 
+        std::to_string(device.devRegsSpace.ipAddr1[2]) + "." +
+        std::to_string(device.devRegsSpace.ipAddr1[3])).c_str());
     mvwprintw(deviceInfoWindow, 4, 1, "MAC адрес у-ва: ");
     mvwprintw(deviceInfoWindow, 4, 20, 
-        (convertIntToHex(device.devRegsSpace.macAddr[0]) + "." + 
-        convertIntToHex(device.devRegsSpace.macAddr[1]) + "." + 
-        convertIntToHex(device.devRegsSpace.macAddr[2]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr[3]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr[4]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr[5])).c_str());
+        (convertIntToHex(device.devRegsSpace.macAddr1[0]) + "." + 
+        convertIntToHex(device.devRegsSpace.macAddr1[1]) + "." + 
+        convertIntToHex(device.devRegsSpace.macAddr1[2]) + "." +
+        convertIntToHex(device.devRegsSpace.macAddr1[3]) + "." +
+        convertIntToHex(device.devRegsSpace.macAddr1[4]) + "." +
+        convertIntToHex(device.devRegsSpace.macAddr1[5])).c_str());
     mvwprintw(deviceInfoWindow, 5, 1, "IP адрес маршр-ра: ");
     mvwprintw(deviceInfoWindow, 5, 20, 
         (std::to_string(device.devRegsSpace.ipGate[0]) + "." + 
@@ -134,12 +138,6 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
     sprintf(date, "%02d:%02d:%02d %02d/%02d/20%02d", device.devRegsSpace.sysTime.hour, device.devRegsSpace.sysTime.minutes, 
         device.devRegsSpace.sysTime.seconds, device.devRegsSpace.sysTime.dayOfMonth, device.devRegsSpace.sysTime.month, 
         device.devRegsSpace.sysTime.year);
-    // mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.devRegsSpace.sysTime.hour) + ":" + 
-    //     std::to_string(device.devRegsSpace.sysTime.minutes) + ":" + 
-    //     std::to_string(device.devRegsSpace.sysTime.seconds) + " " +
-    //     std::to_string(device.devRegsSpace.sysTime.dayOfMonth) + "/" +
-    //     std::to_string(device.devRegsSpace.sysTime.month) + "/20" +
-    //     std::to_string(device.devRegsSpace.sysTime.year)).c_str());
     mvwprintw(deviceInfoWindow, 1, 18, date);
     mvwprintw(deviceInfoWindow, 2, 1, "Температура:");
     mvwprintw(deviceInfoWindow, 2, 15, (std::to_string(device.devRegsSpace.temperature) + "°C").c_str());
@@ -202,7 +200,7 @@ void TerminalGraphic::findServerIp(void) {
 
     /*eth0 - define the ifr_name - port name
     where network attached.*/
-    memcpy(ifr.ifr_name, "enp0s3", IFNAMSIZ - 1);
+    memcpy(ifr.ifr_name, "eth0", IFNAMSIZ - 1);
 
     /*Accessing network interface information by
     passing address using ioctl.*/

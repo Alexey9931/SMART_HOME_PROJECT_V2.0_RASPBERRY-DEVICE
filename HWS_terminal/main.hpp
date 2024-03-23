@@ -13,7 +13,9 @@
 #include <unistd.h>
 #include "device_lib.hpp" 
 #include "sh_memory.hpp" 
+#include "log.hpp" 
 #include "graphic.hpp" 
+#include <cstdint>
 
 class NetMapBox {
     public:

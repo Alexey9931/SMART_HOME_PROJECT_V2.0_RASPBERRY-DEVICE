@@ -10,6 +10,8 @@
 #include <sys/mman.h> 
 #include <sys/types.h> 
 #include "device_lib.hpp" 
+#include "log.hpp" 
+#include <cstdint>
 
 typedef struct shMemory {
     Device device[5];
@@ -21,7 +23,7 @@ class SharedMemory {
         shMemoryDef shMemoryStruct;
         int shmFd;
         uint8_t openSharedMemory(bool isClient);
-        void closeSharedMemory(void);
+        uint8_t closeSharedMemory(void);
         uint8_t copyToSharedMemory(void);
         uint8_t copyFromSharedMemory(void);
 };

@@ -11,7 +11,6 @@ uint8_t Device::writeCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
-        std::cout << "Sent error!" << std::endl;
         return TX_ERROR;
     }
 
@@ -19,7 +18,6 @@ uint8_t Device::writeCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
-        std::cout << "Receive error!" << std::endl;
         return RX_ERROR;
     }
 
@@ -63,7 +61,6 @@ uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
     
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
-        std::cout << "Sent error!" << std::endl;
         return TX_ERROR;
     }
 
@@ -71,7 +68,6 @@ uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + valueSize);
     if (len < 0) {
-        std::cout << "Receive error!" << std::endl;
         return RX_ERROR;
     }
 
@@ -116,7 +112,6 @@ uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
     
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
-        std::cout << "Sent error!" << std::endl;
         return TX_ERROR;
     }
 
@@ -124,7 +119,6 @@ uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
-        std::cout << "Receive error!" << std::endl;
         return RX_ERROR;
     }
 
@@ -168,7 +162,6 @@ uint8_t Device::resetCmd(void) {
     
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
-        std::cout << "Sent error!" << std::endl;
         return TX_ERROR;
     }
 
@@ -176,7 +169,6 @@ uint8_t Device::resetCmd(void) {
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
     if (len < 0) {
-        std::cout << "Receive error!" << std::endl;
         return RX_ERROR;
     }
 
@@ -217,14 +209,12 @@ uint8_t Device::typeCmd(void) {
     
     if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
         + requestReplyIterat.txDataSize, 0) < 0) {
-        std::cout << "Sent error!" << std::endl;
         return TX_ERROR;
     }
     numTxPack++;
 
     int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace));
     if (len < 0) {
-        std::cout << "Receive error!" << std::endl;
         return RX_ERROR;
     }
 

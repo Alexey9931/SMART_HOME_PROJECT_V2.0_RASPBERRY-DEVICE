@@ -12,8 +12,10 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <cstdint>
+#include "log.hpp"
 
-void devicesTask(std::list<std::pair<std::string, std::string>> devicesConfigs);
-void poolingDevice(std::string srcAddr, std::string devAddr);
+void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);
+void poolingDevice(Logger &log, std::string srcAddr, std::string devAddr);
 
 #endif
