@@ -40,10 +40,11 @@ void TerminalGraphic::printMainMenu(Logger &log) {
                 wattron(menuWindow, A_STANDOUT);
             }
             if (sharedMemory.shMemoryStruct.device[i].isInit == true) {
-                stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace.deviceName));
+                stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName, 
+                sizeof(sharedMemory.shMemoryStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName));
             } else {                
                 stringsMainMenu[i] = "ПУСТО        ";
-                memset(&sharedMemory.shMemoryStruct.device[i].devRegsSpace, 0, sizeof(sharedMemory.shMemoryStruct.device[i].devRegsSpace));
+                memset(&sharedMemory.shMemoryStruct.device[i].deviceRegs, 0, sizeof(sharedMemory.shMemoryStruct.device[i].deviceRegs));
                 if (sharedMemory.copyToSharedMemory()) {
                     log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
                 }
@@ -82,70 +83,128 @@ void TerminalGraphic::buttonListener(WINDOW *window, int &highlight) {
 }
 
 void TerminalGraphic::printDeviceInfoWindow(Device device) {
-    WINDOW *deviceInfoWindow = newwin(11, 40, 1, 30);
+    WINDOW *deviceInfoWindow = newwin(13, 40, 1, 30);
     box(deviceInfoWindow, 0, 0);
     refresh();
     mvwprintw(deviceInfoWindow, 0, 2, "ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ");
     mvwprintw(deviceInfoWindow, 1, 1, "Описание: ");
-    if(strstr((char*)device.devRegsSpace.deviceName, "Control Panel")) {
+    if(strstr((char*)device.deviceRegs.commonRomRegsSpace.deviceName, "Control Panel")) {
         mvwprintw(deviceInfoWindow, 1, 15, "Панель управления");
         mvwprintw(deviceInfoWindow, 2, 15, "системой \"УМНЫЙ ДОМ\"");
     } else {
 
     }
-    mvwprintw(deviceInfoWindow, 3, 1, "IP адрес у-ва: ");
-    mvwprintw(deviceInfoWindow, 3, 20, 
-        (std::to_string(device.devRegsSpace.ipAddr1[0]) + "." + 
-        std::to_string(device.devRegsSpace.ipAddr1[1]) + "." + 
-        std::to_string(device.devRegsSpace.ipAddr1[2]) + "." +
-        std::to_string(device.devRegsSpace.ipAddr1[3])).c_str());
-    mvwprintw(deviceInfoWindow, 4, 1, "MAC адрес у-ва: ");
-    mvwprintw(deviceInfoWindow, 4, 20, 
-        (convertIntToHex(device.devRegsSpace.macAddr1[0]) + "." + 
-        convertIntToHex(device.devRegsSpace.macAddr1[1]) + "." + 
-        convertIntToHex(device.devRegsSpace.macAddr1[2]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr1[3]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr1[4]) + "." +
-        convertIntToHex(device.devRegsSpace.macAddr1[5])).c_str());
-    mvwprintw(deviceInfoWindow, 5, 1, "IP адрес маршр-ра: ");
-    mvwprintw(deviceInfoWindow, 5, 20, 
-        (std::to_string(device.devRegsSpace.ipGate[0]) + "." + 
-        std::to_string(device.devRegsSpace.ipGate[1]) + "." + 
-        std::to_string(device.devRegsSpace.ipGate[2]) + "." +
-        std::to_string(device.devRegsSpace.ipGate[3])).c_str());
-    mvwprintw(deviceInfoWindow, 6, 1, "Маска подсети: ");
-    mvwprintw(deviceInfoWindow, 6, 20, 
-        (std::to_string(device.devRegsSpace.ipMask[0]) + "." + 
-        std::to_string(device.devRegsSpace.ipMask[1]) + "." + 
-        std::to_string(device.devRegsSpace.ipMask[2]) + "." +
-        std::to_string(device.devRegsSpace.ipMask[3])).c_str());
-    mvwprintw(deviceInfoWindow, 7, 1, "Порт соединения: ");
-    mvwprintw(deviceInfoWindow, 7, 20, std::to_string(device.devRegsSpace.localPort).c_str());
-    mvwprintw(deviceInfoWindow, 8, 1, "Кол-во отправленных пакетов: ");
-    mvwprintw(deviceInfoWindow, 8, 30, std::to_string(device.devRegsSpace.numTxPack).c_str());
-    mvwprintw(deviceInfoWindow, 9, 1, "Кол-во принятых пакетов: ");
-    mvwprintw(deviceInfoWindow, 9, 30, std::to_string(device.devRegsSpace.numRxPack).c_str());
+    mvwprintw(deviceInfoWindow, 3, 1, "IPv4-адреc (порт №1):");
+    mvwprintw(deviceInfoWindow, 3, 23, 
+        (std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr1[0]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr1[1]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr1[2]) + "." +
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr1[3])).c_str());
+    mvwprintw(deviceInfoWindow, 4, 1, "MAC адрес (порт №1):");
+    mvwprintw(deviceInfoWindow, 4, 22, 
+        (convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[0]) + "." + 
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[1]) + "." + 
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[2]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[3]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[4]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr1[5])).c_str());
+    mvwprintw(deviceInfoWindow, 5, 1, "IPv4-адреc (порт №2):");
+    mvwprintw(deviceInfoWindow, 5, 23, 
+        (std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr2[0]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr2[1]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr2[2]) + "." +
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipAddr2[3])).c_str());
+    mvwprintw(deviceInfoWindow, 6, 1, "MAC адрес (порт №2):");
+    mvwprintw(deviceInfoWindow, 6, 22, 
+        (convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[0]) + "." + 
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[1]) + "." + 
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[2]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[3]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[4]) + "." +
+        convertIntToHex(device.deviceRegs.commonRomRegsSpace.macAddr2[5])).c_str());
+    mvwprintw(deviceInfoWindow, 7, 1, "Основной шлюз: ");
+    mvwprintw(deviceInfoWindow, 7, 20, 
+        (std::to_string(device.deviceRegs.commonRomRegsSpace.ipGate[0]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipGate[1]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipGate[2]) + "." +
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipGate[3])).c_str());
+    mvwprintw(deviceInfoWindow, 8, 1, "Маска подсети: ");
+    mvwprintw(deviceInfoWindow, 8, 20, 
+        (std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[0]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[1]) + "." + 
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[2]) + "." +
+        std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[3])).c_str());
+    mvwprintw(deviceInfoWindow, 9, 1, "Порт соединения: ");
+    mvwprintw(deviceInfoWindow, 9, 20, std::to_string(device.deviceRegs.commonRomRegsSpace.localPort).c_str());
+    mvwprintw(deviceInfoWindow, 10, 1, "Кол-во отправленных пакетов: ");
+    mvwprintw(deviceInfoWindow, 10, 30, std::to_string(device.deviceRegs.commonRamRegsSpace.numTxPack).c_str());
+    mvwprintw(deviceInfoWindow, 11, 1, "Кол-во принятых пакетов: ");
+    mvwprintw(deviceInfoWindow, 11, 30, std::to_string(device.deviceRegs.commonRamRegsSpace.numRxPack).c_str());
     wrefresh(deviceInfoWindow);
 }
 
 void TerminalGraphic::printDeviceDataWindow(Device device) {
-    WINDOW *deviceInfoWindow = newwin(6, 40, 12, 30);
+    WINDOW *deviceInfoWindow = newwin(8, 40, 14, 30);
     box(deviceInfoWindow, 0, 0);
     refresh();
     mvwprintw(deviceInfoWindow, 0, 2, "ДАННЫЕ УСТРОЙСТВА");
-    mvwprintw(deviceInfoWindow, 1, 1, "Системное время:");
-    char date[20];
-    sprintf(date, "%02d:%02d:%02d %02d/%02d/20%02d", device.devRegsSpace.sysTime.hour, device.devRegsSpace.sysTime.minutes, 
-        device.devRegsSpace.sysTime.seconds, device.devRegsSpace.sysTime.dayOfMonth, device.devRegsSpace.sysTime.month, 
-        device.devRegsSpace.sysTime.year);
-    mvwprintw(deviceInfoWindow, 1, 18, date);
-    mvwprintw(deviceInfoWindow, 2, 1, "Температура:");
-    mvwprintw(deviceInfoWindow, 2, 15, (std::to_string(device.devRegsSpace.temperature) + "°C").c_str());
-    mvwprintw(deviceInfoWindow, 3, 1, "Влажность:");
-    mvwprintw(deviceInfoWindow, 3, 15, (std::to_string(device.devRegsSpace.humidity) + "%%").c_str());
-    mvwprintw(deviceInfoWindow, 4, 1, "Атм.давление:");
-    mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.devRegsSpace.pressure) + "мм.рт.ст.").c_str());
 
+    char sysDate[20];
+    char startDate[20];
+    if (strstr((const char*)device.deviceName, CONTROL_PANEL_NAME) != NULL) {
+        mvwprintw(deviceInfoWindow, 1, 1, "Системное время:");
+        sprintf(sysDate, "%02d:%02d:%02d %02d/%02d/20%02d", device.deviceRegs.commonRamRegsSpace.sysTime.hour, 
+            device.deviceRegs.commonRamRegsSpace.sysTime.minutes, device.deviceRegs.commonRamRegsSpace.sysTime.seconds,
+            device.deviceRegs.commonRamRegsSpace.sysTime.dayOfMonth, device.deviceRegs.commonRamRegsSpace.sysTime.month, 
+            device.deviceRegs.commonRamRegsSpace.sysTime.year);
+        mvwprintw(deviceInfoWindow, 1, 18, sysDate);
+        mvwprintw(deviceInfoWindow, 2, 1, "Время запуска:");
+        sprintf(startDate, "%02d:%02d:%02d %02d/%02d/20%02d", device.deviceRegs.commonRamRegsSpace.startTime.hour, 
+            device.deviceRegs.commonRamRegsSpace.startTime.minutes, device.deviceRegs.commonRamRegsSpace.startTime.seconds, 
+            device.deviceRegs.commonRamRegsSpace.startTime.dayOfMonth, device.deviceRegs.commonRamRegsSpace.startTime.month, 
+            device.deviceRegs.commonRamRegsSpace.startTime.year);
+        mvwprintw(deviceInfoWindow, 2, 18, startDate);
+        mvwprintw(deviceInfoWindow, 3, 1, "Время работы:");
+        mvwprintw(deviceInfoWindow, 3, 18, (std::to_string(device.deviceRegs.commonRamRegsSpace.workHours) + "ч").c_str());
+        mvwprintw(deviceInfoWindow, 4, 1, "Температура:");
+        mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.temperature) + "°C").c_str());
+        mvwprintw(deviceInfoWindow, 5, 1, "Влажность:");
+        mvwprintw(deviceInfoWindow, 5, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.humidity) + "%%").c_str());
+        mvwprintw(deviceInfoWindow, 6, 1, "Атм.давление:");
+        mvwprintw(deviceInfoWindow, 6, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.pressure) + "мм.рт.ст.").c_str());
+    } else if (strstr((const char*)device.deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+        mvwprintw(deviceInfoWindow, 1, 1, "Системное время:");
+        sprintf(sysDate, "%02d:%02d:%02d %02d/%02d/20%02d", device.deviceRegs.commonRamRegsSpace.sysTime.hour, 
+            device.deviceRegs.commonRamRegsSpace.sysTime.minutes, device.deviceRegs.commonRamRegsSpace.sysTime.seconds,
+            device.deviceRegs.commonRamRegsSpace.sysTime.dayOfMonth, device.deviceRegs.commonRamRegsSpace.sysTime.month, 
+            device.deviceRegs.commonRamRegsSpace.sysTime.year);
+        mvwprintw(deviceInfoWindow, 1, 18, sysDate);
+        mvwprintw(deviceInfoWindow, 2, 1, "Время запуска:");
+        sprintf(startDate, "%02d:%02d:%02d %02d/%02d/20%02d", device.deviceRegs.commonRamRegsSpace.startTime.hour, 
+            device.deviceRegs.commonRamRegsSpace.startTime.minutes, device.deviceRegs.commonRamRegsSpace.startTime.seconds,
+            device.deviceRegs.commonRamRegsSpace.startTime.dayOfMonth, device.deviceRegs.commonRamRegsSpace.startTime.month, 
+            device.deviceRegs.commonRamRegsSpace.startTime.year);
+        mvwprintw(deviceInfoWindow, 2, 18, startDate);
+        mvwprintw(deviceInfoWindow, 3, 1, "Время работы:");
+        mvwprintw(deviceInfoWindow, 3, 18, (std::to_string(device.deviceRegs.commonRamRegsSpace.workHours) + "ч").c_str());
+        mvwprintw(deviceInfoWindow, 4, 1, "Температура:");
+        mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.temperature) + "°C").c_str());
+        mvwprintw(deviceInfoWindow, 5, 1, "Влажность:");
+        mvwprintw(deviceInfoWindow, 5, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.humidity) + "%%").c_str());
+    } else if (strstr((const char*)device.deviceName, WEATHER_STATION_NAME)!= NULL) {
+        mvwprintw(deviceInfoWindow, 1, 1, "Время работы:");
+        mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.deviceRegs.commonRamRegsSpace.workHours) + "ч").c_str());
+        mvwprintw(deviceInfoWindow, 2, 1, "Температура:");
+        mvwprintw(deviceInfoWindow, 2, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.temperature) + "°C").c_str());
+        mvwprintw(deviceInfoWindow, 3, 1, "Влажность:");
+        mvwprintw(deviceInfoWindow, 3, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.humidity) + "%%").c_str());
+        mvwprintw(deviceInfoWindow, 4, 1, "Кол-во осадков:");
+        mvwprintw(deviceInfoWindow, 4, 20, (std::to_string(device.deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.rainFall) + "%%").c_str());
+        mvwprintw(deviceInfoWindow, 5, 1, "Скорость ветра:");
+        mvwprintw(deviceInfoWindow, 5, 20, (std::to_string(device.deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windSpeed) + "м/с").c_str());
+        mvwprintw(deviceInfoWindow, 6, 1, "Напр-ие ветра:");
+        //mvwprintw(deviceInfoWindow, 3, 20, (std::to_string(device.devRegsSpace.weathStatRegSpace.windDirect)).c_str());
+    }
     wrefresh(deviceInfoWindow);
 }
 
@@ -179,7 +238,7 @@ void TerminalGraphic::printBackgroundWindow(void) {
     // getmaxyx(stdscr, height, width);
 
     // WINDOW *main_win = newwin(height, width, 0, 0);
-    WINDOW *main_win = newwin(19, 72, 0, 0);
+    WINDOW *main_win = newwin(23, 72, 0, 0);
     box(main_win, 0, 0);
     refresh();
     // move and print in window

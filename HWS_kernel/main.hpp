@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cstdint>
+#include <errno.h>
+#include <signal.h>
 #include "log.hpp"
 
 void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);

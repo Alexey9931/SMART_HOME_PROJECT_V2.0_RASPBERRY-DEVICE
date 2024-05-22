@@ -218,12 +218,14 @@ uint8_t Device::typeCmd(void) {
         return RX_ERROR;
     }
 
+    /*TODO: вставить проверку того, что получили корректное имя устройства */
+
     if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
         return PACK_ERROR; 
     }
     numRxPack++;
     
-    memcpy(&devRegsSpace, requestReplyIterat.rxPackFrame.data, requestReplyIterat.rxDataSize);
+    memcpy(deviceName, requestReplyIterat.rxPackFrame.data, sizeof(deviceName));
 
     return NO_ERROR;
 }
@@ -233,6 +235,49 @@ void Device::_type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack
     iterationPack.txDataSize = 1;
 
     iterationPack.txPackFrame.headerFrame.cmd = TYPE_CMD;
+    iterationPack.txPackFrame.headerFrame.recvAddr = dstAddr;
+    iterationPack.txPackFrame.headerFrame.senderAddr = srcAddr;
+    iterationPack.txPackFrame.headerFrame.length = sizeof(ModbusHeader) - sizeof(iterationPack.txPackFrame.headerFrame.header) + 
+        sizeof(iterationPack.txPackFrame.tailFrame.crc) + iterationPack.txDataSize;
+
+    iterationPack.makeTxPack();
+}
+
+uint8_t Device::initCmd(void) {
+    ModbusPack requestReplyIterat;
+    std::string devAddr;
+    std::string srcIpAddr;
+    devAddr.append((char*)deviceIpAddr, sizeof(deviceIpAddr));
+    srcIpAddr.append((char*)sourceIpAddr, sizeof(sourceIpAddr));
+
+    _init(deviceAddrFromIP(devAddr), deviceAddrFromIP(srcIpAddr), requestReplyIterat);
+    
+    if (send(socket_fd, requestReplyIterat.txBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) 
+        + requestReplyIterat.txDataSize, 0) < 0) {
+        return TX_ERROR;
+    }
+    numTxPack++;
+
+    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace));
+    if (len < 0) {
+        return RX_ERROR;
+    }
+
+    if (requestReplyIterat.translateRxPack(requestReplyIterat.rxBuf) != 0) {
+        return PACK_ERROR; 
+    }
+    numRxPack++;
+    
+    memcpy(&deviceRegs, requestReplyIterat.rxPackFrame.data, requestReplyIterat.rxDataSize);
+
+    return NO_ERROR;
+}
+
+void Device::_init(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack) {
+    memset(iterationPack.txPackFrame.data, INIT_CMD, 1);
+    iterationPack.txDataSize = 1;
+
+    iterationPack.txPackFrame.headerFrame.cmd = INIT_CMD;
     iterationPack.txPackFrame.headerFrame.recvAddr = dstAddr;
     iterationPack.txPackFrame.headerFrame.senderAddr = srcAddr;
     iterationPack.txPackFrame.headerFrame.length = sizeof(ModbusHeader) - sizeof(iterationPack.txPackFrame.headerFrame.header) + 

@@ -14,6 +14,16 @@
 #define RX_ERROR    2
 #define PACK_ERROR  3
 
+//Device's register space
+#define CONTROL_PANEL_REGS_SIZE             108
+#define GAS_BOILER_CONTROLLER_REGS_SIZE     105
+#define WEATH_STATION_REGS_SIZE             113
+
+//Device's names
+#define CONTROL_PANEL_NAME          "Control Panel"
+#define GAS_BOILER_CONTROLLER_NAME  "Gas Boiler Controller"
+#define WEATHER_STATION_NAME        "Weather Station"
+
 typedef struct deviceSystemTime {
     uint8_t     seconds;
     uint8_t     minutes;
@@ -24,7 +34,53 @@ typedef struct deviceSystemTime {
     uint8_t     year;
 }__attribute__((packed)) devSysTime;
 
-typedef struct deviceRegisterSpace {
+typedef struct controlPanelRomRegSpace {
+    uint8_t reserv[8];
+}__attribute__((packed)) controlPanelRomRegs;
+
+typedef struct controlPanelRamRegSpace {
+    float           temperature;
+    float           humidity;
+    float           pressure;
+}__attribute__((packed)) controlPanelRamRegs;
+
+typedef struct gasBoilerControllerRomRegSpace {
+    float           tempSetpoint;
+    float           tempRange;
+}__attribute__((packed)) gasBoilerRomRegs;
+
+typedef struct gasBoilerControllerRamRegSpace {
+    float           temperature;
+    float           humidity;
+    uint8_t         releStatus;
+}__attribute__((packed)) gasBoilerRamRegs;
+
+// Структура байта-описвания регистра WindDirection
+typedef struct windDirectionStruct {
+	unsigned int north:1;
+	unsigned int northeast:1;
+	unsigned int east:1;
+	unsigned int southeast:1;
+	unsigned int south:1;
+	unsigned int southwest:1;
+	unsigned int west:1;
+	unsigned int northwest:1;
+}__attribute__((packed)) windDirection;
+
+typedef struct weathStatRomRegSpace {
+    uint8_t reserv[8];
+}__attribute__((packed)) weathStatRomRegs;
+
+typedef struct weathStatRamRegSpace {
+    float           temperature;
+    float           humidity;
+    float           rainFall;
+    float           windSpeed;
+    windDirection	windDirect;
+}__attribute__((packed)) weathStatRamRegs;
+
+// Общие регистры для всех модулей, которые хранятся в ПЗУ
+typedef struct commonRomRegsStruct {
     uint8_t     deviceName[32];
     uint8_t     ipAddr1[4];
     uint8_t     ipAddr2[4];
@@ -33,13 +89,38 @@ typedef struct deviceRegisterSpace {
     uint8_t     macAddr1[6];
     uint8_t     macAddr2[6];
     uint32_t    localPort;
+}__attribute__((packed)) commonRomRegs;
+
+// Общие регистры для всех модулей, которые хранятся в ОЗУ
+typedef struct commonRamRegsStruct {
     int         numRxPack;
     int         numTxPack;
+    int         workHours;
+    devSysTime  startTime;
     devSysTime  sysTime;
-    float       temperature;
-    float       humidity;
-    float       pressure;
-}__attribute__((packed)) devRegs;
+}__attribute__((packed)) commonRamRegs;
+
+// Регистры конкретного у-ва, которые хранятся в ПЗУ
+typedef union deviceRomRegsStruct {
+    controlPanelRomRegs    contPanelRomRegSpace;
+    gasBoilerRomRegs       gasBoilerContRomRegSpace;
+    weathStatRomRegs       weathStatRomRegSpace;
+} devRomRegs;
+
+// Регистры конкретного у-ва, которые хранятся в ОЗУ
+typedef union deviceRamRegsStruct {
+    controlPanelRamRegs    contPanelRamRegSpace;
+    gasBoilerRamRegs       gasBoilerContRamRegSpace;
+    weathStatRamRegs       weathStatRamRegSpace;
+} devRamRegs;
+
+// Вся карта регистров устройства
+typedef struct deviceRegisterSpace {
+    commonRomRegs   commonRomRegsSpace;
+    devRomRegs      deviceRomRegsSpace;
+    commonRamRegs   commonRamRegsSpace;
+    devRamRegs      deviceRamRegsSpace;
+} devRegsSpace;
 
 class Device {
     public:
@@ -51,7 +132,7 @@ class Device {
         uint8_t sourceIpAddr[15];
         int socket_fd = 0;
 
-        devRegs devRegsSpace;
+        devRegsSpace deviceRegs;
 
         uint8_t writeCmd(uint16_t regAddr, void *value, uint16_t valueSize);
         void _writeReg(uint32_t dstAddr, uint32_t srcAddr, uint16_t regAddr, void *value, uint16_t valueSize, ModbusPack& iterationPack);
@@ -63,6 +144,8 @@ class Device {
         void _reset(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
         uint8_t typeCmd(void);
         void _type(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
+        uint8_t initCmd(void);
+        void _init(uint32_t dstAddr, uint32_t srcAddr, ModbusPack& iterationPack);
         uint8_t deviceAddrFromIP(std::string devAddr);
 };
 

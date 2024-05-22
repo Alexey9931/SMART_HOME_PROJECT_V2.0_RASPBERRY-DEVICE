@@ -14,6 +14,7 @@
 #define CONFIG_CMD  0x03
 #define RESET_CMD   0x04
 #define TYPE_CMD    0x05
+#define INIT_CMD    0x06
 
 struct ModbusHeader {
     uint8_t header;
