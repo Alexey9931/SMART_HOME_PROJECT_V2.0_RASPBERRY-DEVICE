@@ -35,6 +35,7 @@ void TerminalGraphic::printMainMenu(Logger &log) {
         if (sharedMemory.copyFromSharedMemory()) {
             log.systemlog(LOG_ERR, "Error to copy data from shared memory!");
         }
+
         for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
             if (i == highlight) {
                 wattron(menuWindow, A_STANDOUT);
@@ -45,6 +46,7 @@ void TerminalGraphic::printMainMenu(Logger &log) {
             } else {                
                 stringsMainMenu[i] = "ПУСТО        ";
                 memset(&sharedMemory.shMemoryStruct.device[i].deviceRegs, 0, sizeof(sharedMemory.shMemoryStruct.device[i].deviceRegs));
+
                 if (sharedMemory.copyToSharedMemory()) {
                     log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
                 }
@@ -91,8 +93,12 @@ void TerminalGraphic::printDeviceInfoWindow(Device device) {
     if(strstr((char*)device.deviceRegs.commonRomRegsSpace.deviceName, "Control Panel")) {
         mvwprintw(deviceInfoWindow, 1, 15, "Панель управления");
         mvwprintw(deviceInfoWindow, 2, 15, "системой \"УМНЫЙ ДОМ\"");
-    } else {
-
+    } else if (strstr((char*)device.deviceRegs.commonRomRegsSpace.deviceName, "Gas Boiler Controller")) {
+        mvwprintw(deviceInfoWindow, 1, 15, "Контроллер управления");
+        mvwprintw(deviceInfoWindow, 2, 15, "газовым котлом");
+    } else if (strstr((char*)device.deviceRegs.commonRomRegsSpace.deviceName, "Weather Station")) {
+        mvwprintw(deviceInfoWindow, 1, 15, "Уличная метеостанция");
+        mvwprintw(deviceInfoWindow, 2, 15, "(наружный)");
     }
     mvwprintw(deviceInfoWindow, 3, 1, "IPv4-адреc (порт №1):");
     mvwprintw(deviceInfoWindow, 3, 23, 
@@ -144,7 +150,7 @@ void TerminalGraphic::printDeviceInfoWindow(Device device) {
 }
 
 void TerminalGraphic::printDeviceDataWindow(Device device) {
-    WINDOW *deviceInfoWindow = newwin(8, 40, 14, 30);
+    WINDOW *deviceInfoWindow = newwin(10, 40, 14, 30);
     box(deviceInfoWindow, 0, 0);
     refresh();
     mvwprintw(deviceInfoWindow, 0, 2, "ДАННЫЕ УСТРОЙСТВА");
@@ -191,6 +197,14 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
         mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.temperature) + "°C").c_str());
         mvwprintw(deviceInfoWindow, 5, 1, "Влажность:");
         mvwprintw(deviceInfoWindow, 5, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.humidity) + "%%").c_str());
+        mvwprintw(deviceInfoWindow, 6, 1, "Состояние реле:");
+        device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus ? 
+           mvwprintw(deviceInfoWindow, 6, 15, "Открыто") : mvwprintw(deviceInfoWindow, 6, 20, "Закрыто");
+        mvwprintw(deviceInfoWindow, 7, 1, "Уставка темп-ры:");
+        mvwprintw(deviceInfoWindow, 7, 20, (std::to_string(device.deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint) + "°C").c_str());
+        mvwprintw(deviceInfoWindow, 8, 1, "Нижняя граница уставки:");
+        mvwprintw(deviceInfoWindow, 8, 25, (std::to_string(device.deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint - 
+            device.deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempRange) + "°C").c_str());
     } else if (strstr((const char*)device.deviceName, WEATHER_STATION_NAME)!= NULL) {
         mvwprintw(deviceInfoWindow, 1, 1, "Время работы:");
         mvwprintw(deviceInfoWindow, 1, 18, (std::to_string(device.deviceRegs.commonRamRegsSpace.workHours) + "ч").c_str());
@@ -238,7 +252,7 @@ void TerminalGraphic::printBackgroundWindow(void) {
     // getmaxyx(stdscr, height, width);
 
     // WINDOW *main_win = newwin(height, width, 0, 0);
-    WINDOW *main_win = newwin(23, 72, 0, 0);
+    WINDOW *main_win = newwin(25, 72, 0, 0);
     box(main_win, 0, 0);
     refresh();
     // move and print in window

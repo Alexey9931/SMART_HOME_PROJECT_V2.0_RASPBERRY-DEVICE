@@ -20,5 +20,6 @@
 
 void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);
 void poolingDevice(Logger &log, std::string srcAddr, std::string devAddr);
+void checkShMemTask();
 
 #endif

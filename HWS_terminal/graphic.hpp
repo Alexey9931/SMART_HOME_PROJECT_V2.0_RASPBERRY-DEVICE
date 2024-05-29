@@ -23,8 +23,12 @@ class TerminalGraphic {
     public:
         TerminalGraphic();
         uint8_t ip_address[15];
-        std::vector<std::string> stringsMainMenu {"ПУСТО        ",
-         "ПУСТО        ", "ПУСТО        ", "ПУСТО        ", "ПУСТО        "};
+        std::vector<std::string> stringsMainMenu {
+            "ПУСТО        ",
+            "ПУСТО        ", 
+            "ПУСТО        ", 
+            "ПУСТО        ", 
+            "ПУСТО        "};
         void printMainMenu(Logger &log);
         void printDeviceInfoWindow(Device device);
         void printDeviceDataWindow(Device device);

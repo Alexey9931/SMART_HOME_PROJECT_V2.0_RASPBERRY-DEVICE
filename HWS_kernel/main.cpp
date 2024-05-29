@@ -2,7 +2,7 @@
 
 #define PORT 5151
 
-extern SharedMemory sharedMemory;
+SharedMemory sharedMemory(false);
 
 std::mutex poolDeviceMut;
 
@@ -16,13 +16,21 @@ int main()
         log.systemlog(LOG_ERR, "Unable to open config file!");
         return 1;
     }
+
+    // Проверка того, как открылась разделяемая память
+    if ((sharedMemory.shMemSem == SEM_FAILED) || (sharedMemory.shmFd < 0)) {
+        log.systemlog(LOG_ERR, "Error while start to work with shared_memory!");
+        return 1;
+    }
+
     //NetMapBox net_map_box(configs_parser.parsed_configs);
     // Запуск основной задачи для опроса модулей
     std::thread devTask([&]() {
         devicesTask(log, configs_parser.parsed_configs.back().second);
     });
-    
+
     devTask.join();
+
     return 0;
 }
 
@@ -31,17 +39,13 @@ void devicesTask(Logger & log, std::list<std::pair<std::string, std::string>> de
     std::string devIP;
     std::vector <std::thread> devicesTaskThread;
 
-    // Открываем разделяемую память
-    if (sharedMemory.openSharedMemory(false)) {
-        log.systemlog(LOG_ERR, "Error to open shared memory!");
-    }
-
     for(auto deviceConfigs : devicesConfigs) {
          if (deviceConfigs.first == "THISDEVICE_IP") {
             thisDevIP = deviceConfigs.second;
          } else {
             devIP = deviceConfigs.second;
             // Запуск потока для опроса каждого модуля
+            log.systemlog(LOG_INFO, "[%s]: Start pooling this device!", devIP.c_str()); 
             devicesTaskThread.push_back(std::thread([&log, thisDevIP, devIP](){
                 poolingDevice(log, thisDevIP, devIP);
             }));
@@ -49,11 +53,6 @@ void devicesTask(Logger & log, std::list<std::pair<std::string, std::string>> de
     }
     for (auto &thread : devicesTaskThread) {
         thread.join();
-    }
-
-    // Закрываем разделяемую память
-    if (sharedMemory.closeSharedMemory()) {
-        log.systemlog(LOG_ERR, "Error to close shared memory!");
     }
 }
 
@@ -131,18 +130,38 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
                     break;
             }   
         } else {
+            // записываем регистры, если есть, что записывать
+            if (sharedMemory.shMemoryStruct.device[deviceID].isWriteLock == true) {
+                poolDeviceMut.lock();
+                if (sharedMemory.copyFromSharedMemory()) {
+                    log.systemlog(LOG_ERR, "[%s]: Error while copying data from shared memory!", devAddr.c_str()); 
+                }
+                poolDeviceMut.unlock();
+                if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, CONTROL_PANEL_NAME) != NULL) {
+                    cmdResult = sharedMemory.shMemoryStruct.device[deviceID].writeCmd
+                        (0, (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, CONTROL_PANEL_REGS_SIZE);
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+                    cmdResult = sharedMemory.shMemoryStruct.device[deviceID].writeCmd
+                    (0, (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, GAS_BOILER_CONTROLLER_REGS_SIZE);
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, WEATHER_STATION_NAME)!= NULL) {
+                    cmdResult = sharedMemory.shMemoryStruct.device[deviceID].writeCmd
+                    (0, (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, WEATH_STATION_REGS_SIZE);
+                }
+                sharedMemory.shMemoryStruct.device[deviceID].isWriteLock = false;
+                if (cmdResult != NO_ERROR) {
+                    log.systemlog(LOG_ERR, "[%s]: Write cmd is failed!", devAddr.c_str());
+                }
+            }
             // читаем все регистры устройства
             if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, CONTROL_PANEL_NAME) != NULL) {
                 cmdResult = sharedMemory.shMemoryStruct.device[deviceID].readCmd(0, CONTROL_PANEL_REGS_SIZE, 
-                (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
-            }
-            else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+                    (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
+            } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
                 cmdResult = sharedMemory.shMemoryStruct.device[deviceID].readCmd(0, GAS_BOILER_CONTROLLER_REGS_SIZE, 
-                (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
-            }
-            else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, WEATHER_STATION_NAME)!= NULL) {
+                    (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
+            } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, WEATHER_STATION_NAME)!= NULL) {
                 cmdResult = sharedMemory.shMemoryStruct.device[deviceID].readCmd(0, WEATH_STATION_REGS_SIZE, 
-                (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
+                    (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
             }
 
             if (cmdResult == NO_ERROR) {

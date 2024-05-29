@@ -131,6 +131,8 @@ class Device {
         uint8_t deviceIpAddr[15];
         uint8_t sourceIpAddr[15];
         int socket_fd = 0;
+        
+        bool isWriteLock = false;
 
         devRegsSpace deviceRegs;
 
