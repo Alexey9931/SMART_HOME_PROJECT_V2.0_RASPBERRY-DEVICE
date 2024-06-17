@@ -130,13 +130,13 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
                     break;
             }   
         } else {
+            poolDeviceMut.lock();
+            if (sharedMemory.copyFromSharedMemory()) {
+                log.systemlog(LOG_ERR, "[%s]: Error while copying data from shared memory!", devAddr.c_str()); 
+            }
+            poolDeviceMut.unlock();
             // записываем регистры, если есть, что записывать
             if (sharedMemory.shMemoryStruct.device[deviceID].isWriteLock == true) {
-                poolDeviceMut.lock();
-                if (sharedMemory.copyFromSharedMemory()) {
-                    log.systemlog(LOG_ERR, "[%s]: Error while copying data from shared memory!", devAddr.c_str()); 
-                }
-                poolDeviceMut.unlock();
                 if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, CONTROL_PANEL_NAME) != NULL) {
                     cmdResult = sharedMemory.shMemoryStruct.device[deviceID].writeCmd
                         (0, (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, CONTROL_PANEL_REGS_SIZE);

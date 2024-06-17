@@ -15,9 +15,9 @@
 #define PACK_ERROR  3
 
 //Device's register space
-#define CONTROL_PANEL_REGS_SIZE             108
-#define GAS_BOILER_CONTROLLER_REGS_SIZE     105
-#define WEATH_STATION_REGS_SIZE             113
+#define CONTROL_PANEL_REGS_SIZE             110
+#define GAS_BOILER_CONTROLLER_REGS_SIZE     107
+#define WEATH_STATION_REGS_SIZE             115
 
 //Device's names
 #define CONTROL_PANEL_NAME          "Control Panel"

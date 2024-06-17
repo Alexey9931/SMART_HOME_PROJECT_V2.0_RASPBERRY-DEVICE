@@ -29,7 +29,7 @@ void TerminalGraphic::printMainMenu(Logger &log) {
     wrefresh(menuWindow);
     int highlight = 0;
     std::thread buttonHandler([&]() {
-        buttonListener(menuWindow, highlight);
+        buttonListener(menuWindow, highlight, log);
     });
     while (1) {
         if (sharedMemory.copyFromSharedMemory()) {
@@ -63,7 +63,7 @@ void TerminalGraphic::printMainMenu(Logger &log) {
     buttonHandler.join();  
 }
 
-void TerminalGraphic::buttonListener(WINDOW *window, int &highlight) {
+void TerminalGraphic::buttonListener(WINDOW *window, int &highlight, Logger &log) {
     while(1) {
         switch (wgetch(window)) {
             case KEY_DOWN:
@@ -76,10 +76,25 @@ void TerminalGraphic::buttonListener(WINDOW *window, int &highlight) {
                 if (highlight == -1)
                     highlight = 0;
                 break;
-            // case 10:    /*Enter*/
-            //     printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
-            //     printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);
-            //     break;
+            case 10:
+                if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                    CONTROL_PANEL_NAME)!= NULL) {
+                    
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                    GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+                    if (sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus)
+                        sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 0;
+                    else
+                        sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 1;
+                    sharedMemory.shMemoryStruct.device[highlight].isWriteLock = true;
+                    if (sharedMemory.copyToSharedMemory()) {
+                        log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
+                    }
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                    WEATHER_STATION_NAME)!= NULL) {
+
+                }
+                break;
         } 
     }     
 }
@@ -199,7 +214,7 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
         mvwprintw(deviceInfoWindow, 5, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.humidity) + "%%").c_str());
         mvwprintw(deviceInfoWindow, 6, 1, "Состояние реле:");
         device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus ? 
-           mvwprintw(deviceInfoWindow, 6, 15, "Открыто") : mvwprintw(deviceInfoWindow, 6, 20, "Закрыто");
+           mvwprintw(deviceInfoWindow, 6, 20, "Открыто") : mvwprintw(deviceInfoWindow, 6, 20, "Закрыто");
         mvwprintw(deviceInfoWindow, 7, 1, "Уставка темп-ры:");
         mvwprintw(deviceInfoWindow, 7, 20, (std::to_string(device.deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint) + "°C").c_str());
         mvwprintw(deviceInfoWindow, 8, 1, "Нижняя граница уставки:");

@@ -34,7 +34,7 @@ class TerminalGraphic {
         void printDeviceDataWindow(Device device);
         void printBackgroundWindow(void);
         void printServerInfoWindow(void);
-        void buttonListener(WINDOW *window, int &highlight);
+        void buttonListener(WINDOW *window, int &highlight, Logger &log);
     private:
         std::string convertIntToHex(int toConvert);
         void findServerIp(void);
