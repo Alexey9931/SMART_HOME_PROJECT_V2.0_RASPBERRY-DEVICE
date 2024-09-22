@@ -1,0 +1,29 @@
+{
+"version": "0.2.0",
+  "configurations": [
+    {
+      "name": "gdb Launch hws_kernel",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/HWS_kernel/hws_kernel",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "preLaunchTask": "build"
+    },
+    {
+      "name": "gdb Launch hws_terminal",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/HWS_terminal/hws_terminal",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${fileDirname}",
+      "environment": [],
+      "externalConsole": false,
+      "preLaunchTask": "build"
+    }
+  ]
+}

@@ -156,7 +156,7 @@ void TerminalGraphic::printDeviceInfoWindow(Device device) {
         std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[2]) + "." +
         std::to_string(device.deviceRegs.commonRomRegsSpace.ipMask[3])).c_str());
     mvwprintw(deviceInfoWindow, 9, 1, "Порт соединения: ");
-    mvwprintw(deviceInfoWindow, 9, 20, std::to_string(device.deviceRegs.commonRomRegsSpace.localPort).c_str());
+    mvwprintw(deviceInfoWindow, 9, 20, std::to_string(device.deviceRegs.commonRomRegsSpace.localPort[0]).c_str());
     mvwprintw(deviceInfoWindow, 10, 1, "Кол-во отправленных пакетов: ");
     mvwprintw(deviceInfoWindow, 10, 30, std::to_string(device.deviceRegs.commonRamRegsSpace.numTxPack).c_str());
     mvwprintw(deviceInfoWindow, 11, 1, "Кол-во принятых пакетов: ");

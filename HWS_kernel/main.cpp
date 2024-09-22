@@ -164,15 +164,16 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
                     (unsigned char*)&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs);
             }
 
-            if (cmdResult == NO_ERROR) {
-                poolDeviceMut.lock();
-                if (sharedMemory.copyToSharedMemory()) {
-                    log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
-                }
-                poolDeviceMut.unlock();
-            } else {
+            if (cmdResult != NO_ERROR) {
+                sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
                 log.systemlog(LOG_ERR, "[%s]: Read cmd is failed!", devAddr.c_str());
             }
+            
+            poolDeviceMut.lock();
+            if (sharedMemory.copyToSharedMemory()) {
+                log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
+            }
+            poolDeviceMut.unlock();
         } 
         sleep(1);
     }  

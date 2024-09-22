@@ -15,9 +15,9 @@
 #define PACK_ERROR  3
 
 //Device's register space
-#define CONTROL_PANEL_REGS_SIZE             110
-#define GAS_BOILER_CONTROLLER_REGS_SIZE     107
-#define WEATH_STATION_REGS_SIZE             115
+#define CONTROL_PANEL_REGS_SIZE             114
+#define GAS_BOILER_CONTROLLER_REGS_SIZE     111
+#define WEATH_STATION_REGS_SIZE             119
 
 //Device's names
 #define CONTROL_PANEL_NAME          "Control Panel"
@@ -88,7 +88,7 @@ typedef struct commonRomRegsStruct {
     uint8_t     ipMask[4];
     uint8_t     macAddr1[6];
     uint8_t     macAddr2[6];
-    uint32_t    localPort;
+    uint32_t    localPort[2];
 }__attribute__((packed)) commonRomRegs;
 
 // Общие регистры для всех модулей, которые хранятся в ОЗУ
@@ -120,7 +120,7 @@ typedef struct deviceRegisterSpace {
     devRomRegs      deviceRomRegsSpace;
     commonRamRegs   commonRamRegsSpace;
     devRamRegs      deviceRamRegsSpace;
-} devRegsSpace;
+} __attribute__((packed)) devRegsSpace;
 
 class Device {
     public:
