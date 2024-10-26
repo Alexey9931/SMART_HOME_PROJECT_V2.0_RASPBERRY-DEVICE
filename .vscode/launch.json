@@ -18,7 +18,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/HWS_terminal/hws_terminal",
-      "args": [],
+      "args": ["local"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

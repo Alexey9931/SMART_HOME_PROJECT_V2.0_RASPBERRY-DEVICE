@@ -11,15 +11,18 @@
 #include <thread>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <cstdint>
 #include <errno.h>
 #include <signal.h>
 #include <mutex>
 #include "log.hpp"
+#include <net/if.h>
 
 void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);
 void poolingDevice(Logger &log, std::string srcAddr, std::string devAddr);
-void checkShMemTask();
+void terminalRemoteTask(Logger &log);
+void findServerIp(char *ip_address);
 
 #endif

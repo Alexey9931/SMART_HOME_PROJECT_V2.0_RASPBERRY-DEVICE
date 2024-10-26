@@ -17,12 +17,4 @@
 #include "graphic.hpp" 
 #include <cstdint>
 
-class NetMapBox {
-    public:
-        //NetMapBox(std::list<ConfigEntry>);
-        std::map<std::string, std::pair<std::string, bool>> net_map;
-    private:
-
-};
-
 #endif

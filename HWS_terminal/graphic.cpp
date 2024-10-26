@@ -1,10 +1,73 @@
 #include "graphic.hpp"
-#include "sh_memory.hpp"
+#define TERMINAL_PORT 5153
 
-extern SharedMemory sharedMemory;
+TerminalGraphic::TerminalGraphic() :
+    Logger("smhometerminal", "/usr/local/sm_home/smhometerminal.log", "a") {
+    
+    std::unique_ptr<SharedMemory> sharedMemPtr;
+    void *obj;
+    sharedMemPtr = std::make_unique<SharedMemory>(true);
+    // Проверка того, как открылась разделяемая память
+    if ((sharedMemPtr->shMemSem == SEM_FAILED) || (sharedMemPtr->shmFd < 0)) {
+        Logger::systemlog(LOG_ERR, "Error while start to work with shared_memory!");
+        return;
+    }
+    obj = sharedMemPtr.get();
 
-TerminalGraphic::TerminalGraphic() {
+    std::thread shStructTask([&]() {
+        getSharedStructTask(false, obj);
+    });
 
+    printBackgroundWindow();
+    printMainMenu();
+
+    Logger::systemlog(LOG_INFO, "Local SmartHomeTerminal has been succesfully started!");
+    shStructTask.join();
+}
+
+TerminalGraphic::TerminalGraphic(char *serverIP) :
+    Logger("smhometerminal", "/usr/local/sm_home/smhometerminal.log", "a") {
+    
+    void *obj;
+    int sock;
+    struct sockaddr_in addr;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock < 0)
+    {
+        Logger::systemlog(LOG_ERR, "Error to open socket!");
+        return;
+    }
+
+    signal(SIGPIPE, SIG_IGN);
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(TERMINAL_PORT);
+    addr.sin_addr.s_addr = inet_addr("192.168.1.89");
+
+    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        Logger::systemlog(LOG_ERR, "Error to connect!");
+        return;
+    }
+
+    struct timeval rxtimeout;
+    rxtimeout.tv_sec = 5;
+    rxtimeout.tv_usec = 0;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &rxtimeout, sizeof(rxtimeout)) < 0) {
+        Logger::systemlog(LOG_ERR, "Error to set socket options!");
+    }
+    obj = &sock;
+
+    std::thread shStructTask([&]() {
+        getSharedStructTask(true, obj);
+    });
+
+    printBackgroundWindow();
+    printMainMenu();
+
+    Logger::systemlog(LOG_INFO, "Remote SmartHomeTerminal has been succesfully started!");
+    shStructTask.join();
 }
 
 std::string TerminalGraphic::convertIntToHex(int toConvert) {
@@ -16,54 +79,65 @@ std::string TerminalGraphic::convertIntToHex(int toConvert) {
     return result;
 }
 
-void TerminalGraphic::printMainMenu(Logger &log) {
-    findServerIp();
+void TerminalGraphic::getSharedStructTask(bool remote, void *obj) {
+    while (1) {
+        if (!remote) {
+            auto sharedMem = static_cast<SharedMemory*>(obj);
+            if (sharedMem->copyFromSharedMemory()) {
+                Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+            }
+            memcpy(&sharedMemStruct, &sharedMem->shMemoryStruct, sizeof(sharedMem->shMemoryStruct));
+        } else {
+            int sock = *(int*)obj;
+            if (send(sock, "READ", sizeof("READ"), 0) != sizeof("READ")) {
+                Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+            }
+            if (recv(sock, &sharedMemStruct, sizeof(sharedMemStruct), 0) != sizeof(sharedMemStruct)) {
+                Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+            }
+        }
+        sleep(1);
+    }
+}
+
+void TerminalGraphic::printMainMenu(void) {
     WINDOW *menuWindow = newwin(11, 27, 1, 2);
     box(menuWindow, 0, 0);
     refresh();
     mvwprintw(menuWindow, 0, 5, "УСТРОЙСТВА В СЕТИ");
     keypad(menuWindow, true);
-    for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
+    for (uint8_t i = 0; i < sizeof(sharedMemStruct)/sizeof(sharedMemStruct.device[0]); i++) {
        mvwprintw(menuWindow, 1 + i, 1, ("-" + std::to_string(i+1) + "- " + stringsMainMenu[i]).c_str()); 
     }
     wrefresh(menuWindow);
     int highlight = 0;
     std::thread buttonHandler([&]() {
-        buttonListener(menuWindow, highlight, log);
+        buttonListener(menuWindow, highlight);
     });
     while (1) {
-        if (sharedMemory.copyFromSharedMemory()) {
-            log.systemlog(LOG_ERR, "Error to copy data from shared memory!");
-        }
-
-        for (uint8_t i = 0; i < sizeof(sharedMemory.shMemoryStruct)/sizeof(sharedMemory.shMemoryStruct.device[0]); i++) {
+        for (uint8_t i = 0; i < sizeof(sharedMemStruct)/sizeof(sharedMemStruct.device[0]); i++) {
             if (i == highlight) {
                 wattron(menuWindow, A_STANDOUT);
             }
-            if (sharedMemory.shMemoryStruct.device[i].isInit == true) {
-                stringsMainMenu[i].assign((char*)sharedMemory.shMemoryStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName, 
-                sizeof(sharedMemory.shMemoryStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName));
+            if (sharedMemStruct.device[i].isInit == true) {
+                stringsMainMenu[i].assign((char*)sharedMemStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName, 
+                sizeof(sharedMemStruct.device[i].deviceRegs.commonRomRegsSpace.deviceName));
             } else {                
                 stringsMainMenu[i] = "ПУСТО        ";
-                memset(&sharedMemory.shMemoryStruct.device[i].deviceRegs, 0, sizeof(sharedMemory.shMemoryStruct.device[i].deviceRegs));
-
-                if (sharedMemory.copyToSharedMemory()) {
-                    log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
-                }
             }
             mvwprintw(menuWindow, 1 + i, 1, ("-" + std::to_string(i+1) + "- " + stringsMainMenu[i]).c_str()); 
             wattroff(menuWindow, A_STANDOUT);
             wrefresh(menuWindow);
         } 
-        printDeviceInfoWindow(sharedMemory.shMemoryStruct.device[highlight]);
-        printDeviceDataWindow(sharedMemory.shMemoryStruct.device[highlight]);   
-        printServerInfoWindow();
+        printDeviceInfoWindow(sharedMemStruct.device[highlight]);
+        printDeviceDataWindow(sharedMemStruct.device[highlight]);   
+        printServerInfoWindow(sharedMemStruct.serverIP);
         usleep(100000);
     } 
     buttonHandler.join();  
 }
 
-void TerminalGraphic::buttonListener(WINDOW *window, int &highlight, Logger &log) {
+void TerminalGraphic::buttonListener(WINDOW *window, int &highlight) {
     while(1) {
         switch (wgetch(window)) {
             case KEY_DOWN:
@@ -77,23 +151,23 @@ void TerminalGraphic::buttonListener(WINDOW *window, int &highlight, Logger &log
                     highlight = 0;
                 break;
             case 10:
-                if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
-                    CONTROL_PANEL_NAME)!= NULL) {
+                // if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                //     CONTROL_PANEL_NAME)!= NULL) {
                     
-                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
-                    GAS_BOILER_CONTROLLER_NAME)!= NULL) {
-                    if (sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus)
-                        sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 0;
-                    else
-                        sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 1;
-                    sharedMemory.shMemoryStruct.device[highlight].isWriteLock = true;
-                    if (sharedMemory.copyToSharedMemory()) {
-                        log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
-                    }
-                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
-                    WEATHER_STATION_NAME)!= NULL) {
+                // } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                //     GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+                //     if (sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus)
+                //         sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 0;
+                //     else
+                //         sharedMemory.shMemoryStruct.device[highlight].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus = 1;
+                //     sharedMemory.shMemoryStruct.device[highlight].isWriteLock = true;
+                //     if (sharedMemory.copyToSharedMemory()) {
+                //         log.systemlog(LOG_ERR, "Error to copy data to shared memory!");
+                //     }
+                // } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[highlight].deviceName, 
+                //     WEATHER_STATION_NAME)!= NULL) {
 
-                }
+                // }
                 break;
         } 
     }     
@@ -237,7 +311,7 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
     wrefresh(deviceInfoWindow);
 }
 
-void TerminalGraphic::printServerInfoWindow(void) {
+void TerminalGraphic::printServerInfoWindow(char *serverIP) {
     char date[20];
     time_t rawtime;
     struct tm * timeinfo;
@@ -251,7 +325,7 @@ void TerminalGraphic::printServerInfoWindow(void) {
     strftime(date, 20, "%H:%M:%S %d/%m/%Y", timeinfo); // форматируем строку времени
     mvwprintw(serverInfoWindow, 2, 1, date);
     mvwprintw(serverInfoWindow, 3, 1, "IP адрес сервера: ");
-    mvwprintw(serverInfoWindow, 4, 1, (char*)ip_address);
+    mvwprintw(serverInfoWindow, 4, 1, (char*)serverIP);
 
     wrefresh(serverInfoWindow);
 }
@@ -273,29 +347,4 @@ void TerminalGraphic::printBackgroundWindow(void) {
     // move and print in window
     mvwprintw(main_win, 0, 25, "ПАНЕЛЬ УПРАВЛЕНИЯ СИСТЕМОЙ \"УМНЫЙ ДОМ\"");
     wrefresh(main_win);
-}
-
-void TerminalGraphic::findServerIp(void) {
-    int fd;
-    struct ifreq ifr;
-
-    /*AF_INET - to define network interface IPv4*/
-    /*Creating soket for it.*/
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    /*AF_INET - to define IPv4 Address type.*/
-    ifr.ifr_addr.sa_family = AF_INET;
-
-    /*eth0 - define the ifr_name - port name
-    where network attached.*/
-    memcpy(ifr.ifr_name, "eth0", IFNAMSIZ - 1);
-
-    /*Accessing network interface information by
-    passing address using ioctl.*/
-    ioctl(fd, SIOCGIFADDR, &ifr);
-    /*closing fd*/
-    close(fd);
-
-    /*Extract IP Address*/
-    strcpy((char*)ip_address, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
 }

@@ -19,6 +19,7 @@
 typedef struct shMemory {
     Device device[5];
     uint8_t deviceCounter;
+    char serverIP[15];
 }__attribute__((packed)) shMemoryDef;
 
 class SharedMemory {

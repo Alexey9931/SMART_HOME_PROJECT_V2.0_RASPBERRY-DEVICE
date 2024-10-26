@@ -16,25 +16,33 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include <cstdint>
 #include "log.hpp"
+#include "sh_memory.hpp"
 
-class TerminalGraphic {
+class TerminalGraphic : public Logger {
     public:
         TerminalGraphic();
-        uint8_t ip_address[15];
+        TerminalGraphic(char *serverIP);
+        ~TerminalGraphic() {
+            getch();
+            endwin();
+        }
+        shMemoryDef sharedMemStruct;
         std::vector<std::string> stringsMainMenu {
             "ПУСТО        ",
             "ПУСТО        ", 
             "ПУСТО        ", 
             "ПУСТО        ", 
             "ПУСТО        "};
-        void printMainMenu(Logger &log);
+        void printMainMenu(void);
         void printDeviceInfoWindow(Device device);
         void printDeviceDataWindow(Device device);
         void printBackgroundWindow(void);
-        void printServerInfoWindow(void);
-        void buttonListener(WINDOW *window, int &highlight, Logger &log);
+        void printServerInfoWindow(char *serverIP);
+        void buttonListener(WINDOW *window, int &highlight);
+        void getSharedStructTask(bool remote, void *obj);
     private:
         std::string convertIntToHex(int toConvert);
         void findServerIp(void);
