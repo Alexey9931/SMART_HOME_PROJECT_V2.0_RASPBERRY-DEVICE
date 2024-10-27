@@ -72,6 +72,7 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
     sharedMemoryMut.lock();
     uint8_t deviceID = sharedMemory.shMemoryStruct.deviceCounter;
     sharedMemory.shMemoryStruct.deviceCounter++;
+    sharedMemoryMut.unlock();
 
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
@@ -97,29 +98,30 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
     setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
     setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
-    sharedMemoryMut.unlock();
-
     uint8_t cmdResult;
     while (true)
     {
-        sharedMemoryMut.lock();
         if (sharedMemory.shMemoryStruct.device[deviceID].isInit != true) {
             cmdResult = sharedMemory.shMemoryStruct.device[deviceID].typeCmd();
             switch (cmdResult) {
                 case NO_ERROR:
                     sharedMemory.shMemoryStruct.device[deviceID].isInit = true;
+                    sharedMemoryMut.lock();
                     if (sharedMemory.copyToSharedMemory()) {
                         log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
                     }
+                    sharedMemoryMut.unlock();
                     break;
                 case TX_ERROR: case RX_ERROR:
                     log.systemlog(LOG_ERR, "[%s]: Type cmd is failed! Connection error! Attemp to reconnect... ", devAddr.c_str());
                     sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
                     memset(&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, 0,
                         sizeof(sharedMemory.shMemoryStruct.device[deviceID].deviceRegs));
+                    sharedMemoryMut.lock();
                     if (sharedMemory.copyToSharedMemory()) {
                         log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
                     }
+                    sharedMemoryMut.unlock();
                     if (close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd)) {
                         log.systemlog(LOG_ERR, "[%s]: Error to close shared memory!", devAddr.c_str());
                     }
@@ -129,22 +131,26 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
                     setsockopt(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
                     if (connect(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
                         log.systemlog(LOG_ERR, "[%s]: Error connection!", devAddr.c_str());
-                    }             
+                    }
                     break;
                 case PACK_ERROR:
                     log.systemlog(LOG_ERR, "[%s]: Type cmd is failed! Pack error!", devAddr.c_str());
                     sharedMemory.shMemoryStruct.device[deviceID].isInit = false;
                     memset(&sharedMemory.shMemoryStruct.device[deviceID].deviceRegs, 0,
                         sizeof(sharedMemory.shMemoryStruct.device[deviceID].deviceRegs));
+                    sharedMemoryMut.lock();
                     if (sharedMemory.copyToSharedMemory()) {
                         log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
                     }
+                    sharedMemoryMut.unlock();
                     break;
             }   
         } else {
+            sharedMemoryMut.lock();
             if (sharedMemory.copyFromSharedMemory()) {
                 log.systemlog(LOG_ERR, "[%s]: Error while copying data from shared memory!", devAddr.c_str()); 
             }
+            sharedMemoryMut.unlock();
             // записываем регистры, если есть, что записывать
             if (sharedMemory.shMemoryStruct.device[deviceID].isWriteLock == true) {
                 if (strstr((const char*)sharedMemory.shMemoryStruct.device[deviceID].deviceName, CONTROL_PANEL_NAME) != NULL) {
@@ -184,18 +190,17 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
                 log.systemlog(LOG_ERR, "[%s]: Read cmd is failed!", devAddr.c_str());
             }
             
+            sharedMemoryMut.lock();
             if (sharedMemory.copyToSharedMemory()) {
                 log.systemlog(LOG_ERR, "[%s]: Error while copying data to shared memory!", devAddr.c_str()); 
             }
+            sharedMemoryMut.unlock();
         } 
-        sharedMemoryMut.unlock();
         sleep(1);
     }
-    sharedMemoryMut.lock();
     if (close(sharedMemory.shMemoryStruct.device[deviceID].socket_fd)) {
         log.systemlog(LOG_ERR, "[%s]: Error to close socket!", devAddr.c_str());
     }
-    sharedMemoryMut.unlock();
 }
 
 void findServerIp(char *ip_address) {
@@ -254,7 +259,7 @@ void terminalRemoteTask(Logger &log) {
         return;
     }
     
-    log.systemlog(LOG_INFO, "[%s]:Server for remote Terminal has been succesfully started!Listening REQUESTS...", __FUNCTION__);
+    log.systemlog(LOG_INFO, "[%s]:Server for remote Terminal has been succesfully started!", __FUNCTION__);
 
     while(1) {
         sock = accept(listener, NULL, NULL);
@@ -262,22 +267,27 @@ void terminalRemoteTask(Logger &log) {
             close(sock);
             continue;
         }
-
+        log.systemlog(LOG_INFO, "[%s]:Remote Terminal client has been connected!Listening REQUESTS...", __FUNCTION__);
         while(1) {
-            if (recv(sock, NULL, sizeof("READ"), 0) != sizeof("READ")) {
-                log.systemlog(LOG_ERR, "[%s]:Error to read!", __FUNCTION__);
+            uint8_t *buf = (uint8_t*)malloc(sizeof("READ"));
+            if (recv(sock, buf, sizeof("READ"), 0) != sizeof("READ")) {
+                log.systemlog(LOG_INFO, "[%s]:Remote Terminal client has been disconnected!", __FUNCTION__);
                 break;
             }
+            free(buf);
             sharedMemoryMut.lock();
             if (sharedMemory.copyFromSharedMemory()) {
                 log.systemlog(LOG_ERR, "[%s]: Error while copying data from shared memory!", __FUNCTION__); 
             }
-            if (send(sock, &sharedMemory.shMemoryStruct, sizeof(sharedMemory.shMemoryStruct), 0) != sizeof(sharedMemory.shMemoryStruct)) {
-                log.systemlog(LOG_ERR, "[%s]:Error to write!", __FUNCTION__);
+            if (send(sock, &sharedMemory.shMemoryStruct, sizeof(sharedMemory.shMemoryStruct), 0)
+                != sizeof(sharedMemory.shMemoryStruct)) {
+                log.systemlog(LOG_INFO, "[%s]:Remote Terminal client has been disconnected!", __FUNCTION__);
+                sharedMemoryMut.unlock();
                 break;
             }
             sharedMemoryMut.unlock();
         }
+        sleep(1);
     }
 
     close(sock);

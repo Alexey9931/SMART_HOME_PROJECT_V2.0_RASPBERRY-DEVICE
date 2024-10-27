@@ -18,7 +18,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/HWS_terminal/hws_terminal",
-      "args": ["local"],
+      "args": ["remote", "192.168.1.223"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

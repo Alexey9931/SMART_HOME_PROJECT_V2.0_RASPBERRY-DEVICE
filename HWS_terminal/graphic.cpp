@@ -43,7 +43,7 @@ TerminalGraphic::TerminalGraphic(char *serverIP) :
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(TERMINAL_PORT);
-    addr.sin_addr.s_addr = inet_addr("192.168.1.89");
+    addr.sin_addr.s_addr = inet_addr(serverIP);
 
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -85,15 +85,18 @@ void TerminalGraphic::getSharedStructTask(bool remote, void *obj) {
             auto sharedMem = static_cast<SharedMemory*>(obj);
             if (sharedMem->copyFromSharedMemory()) {
                 Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+                return;
             }
             memcpy(&sharedMemStruct, &sharedMem->shMemoryStruct, sizeof(sharedMem->shMemoryStruct));
         } else {
             int sock = *(int*)obj;
             if (send(sock, "READ", sizeof("READ"), 0) != sizeof("READ")) {
-                Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+                Logger::systemlog(LOG_ERR, "Error to send REQUEST to hws_kernel!");
+                return;
             }
             if (recv(sock, &sharedMemStruct, sizeof(sharedMemStruct), 0) != sizeof(sharedMemStruct)) {
-                Logger::systemlog(LOG_ERR, "Error to copy data from shared memory!");
+                Logger::systemlog(LOG_ERR, "Error to get RESPONSE from hws_kernel!");
+                return;
             }
         }
         sleep(1);
