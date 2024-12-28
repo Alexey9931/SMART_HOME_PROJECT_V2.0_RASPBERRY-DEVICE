@@ -89,7 +89,7 @@ void poolingDevice(Logger & log, std::string srcAddr, std::string devAddr) {
     signal(SIGPIPE, SIG_IGN);
 
     struct timeval tv;
-    tv.tv_sec = 11;
+    tv.tv_sec = 22;
 
     if (connect(sharedMemory.shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         log.systemlog(LOG_ERR, "[%s]: Error connection!", devAddr.c_str());
