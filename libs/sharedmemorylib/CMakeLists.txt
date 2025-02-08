@@ -1,12 +1,13 @@
-cmake_minimum_required(VERSION 3.22)
-
-project(sharedmemorylib)
+project(sharedmemory)
 
 set(SOURCE_FILES sh_memory.cpp)
-set(HEADER_FILES sh_memory.hpp)
 
-add_library(sharedmemory SHARED ${SOURCE_FILES} 
-                                ${HEADER_FILES})
-target_link_libraries(sharedmemory device log)
-target_include_directories(sharedmemory PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME} log)
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/devicelib/>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/modbuslib/>)

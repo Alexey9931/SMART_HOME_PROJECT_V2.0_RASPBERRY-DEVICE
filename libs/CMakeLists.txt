@@ -1,3 +1,4 @@
+add_subdirectory(mysqldblib)
 add_subdirectory(modbuslib)
 add_subdirectory(devicelib)
 add_subdirectory(loglib)

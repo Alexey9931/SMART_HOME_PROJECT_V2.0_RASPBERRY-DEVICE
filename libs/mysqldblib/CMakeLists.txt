@@ -1,0 +1,30 @@
+project(mysql_db)
+
+set(SOURCE_FILES db_core.cpp)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR})
+
+# sudo apt-get install pkg-config
+# sudo apt-get -y install libmysqlclient-dev
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+include(FindPkgConfig)
+pkg_check_modules(LIBMYSQLCLIENT REQUIRED mysqlclient)
+
+foreach(FLAG ${LIBMYSQLCLIENT_CFLAGS_OTHER})
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAG}")
+endforeach()
+
+link_directories(${LIBMYSQLCLIENT_LIBRARY_DIRS})
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        ${LIBMYSQLCLIENT_INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        ${LIBMYSQLCLIENT_LIBRARIES}
+        log)

@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.22)
+project(log)
 
-project(loglib)
+add_library(${PROJECT_NAME} INTERFACE)
 
-add_library(log INTERFACE)
-target_include_directories(log INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>)
+target_include_directories(${PROJECT_NAME}
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

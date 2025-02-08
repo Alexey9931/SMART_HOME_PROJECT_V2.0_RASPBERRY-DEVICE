@@ -3,8 +3,12 @@
 #define KERNEL_PORT 5151
 #define TERMINAL_PORT 5153
 
-SharedMemory sharedMemory(false);
+#define MYSQL_SERVER_NAME   "localhost"
+#define MYSQL_USER          "root"
+#define MYSQL_PASSWD        "1234"
+#define MYSQL_DB_NAME       "SmartHomeProject"
 
+SharedMemory sharedMemory(false);
 std::mutex sharedMemoryMut;
 
 int main()
@@ -39,6 +43,9 @@ int main()
     std::thread terminalTask([&]() {
         terminalRemoteTask(log);
     });
+
+    // Запуск задачи отправки данных в БД MYSQL
+    SQLDataBase MySQLDb(MYSQL_SERVER_NAME, MYSQL_USER, MYSQL_PASSWD, MYSQL_DB_NAME);
 
     devTask.join();
     terminalTask.join();

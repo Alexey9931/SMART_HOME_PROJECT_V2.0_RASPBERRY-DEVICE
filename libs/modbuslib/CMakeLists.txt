@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.22)
-
-project(modbuslib)
+project(modbus)
 
 set(SOURCE_FILES modbus.cpp)
-set(HEADER_FILES modbus.hpp)
 
-add_library(modbus SHARED ${SOURCE_FILES} 
-                          ${HEADER_FILES})
-target_include_directories(modbus PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

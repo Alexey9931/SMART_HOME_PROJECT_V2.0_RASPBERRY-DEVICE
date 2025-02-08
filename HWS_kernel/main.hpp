@@ -2,7 +2,6 @@
 #define _MAIN_HPP
 
 #include "config_parser.hpp"
-#include "sh_memory.hpp"
 #include <map>
 #include <vector>
 #include <iostream>
@@ -17,8 +16,10 @@
 #include <errno.h>
 #include <signal.h>
 #include <mutex>
-#include "log.hpp"
 #include <net/if.h>
+#include "sh_memory.hpp"
+#include "log.hpp"
+#include "sql_db.hpp"
 
 void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);
 void poolingDevice(Logger &log, std::string srcAddr, std::string devAddr);
