@@ -5,7 +5,7 @@
 
 #define MYSQL_SERVER_NAME   "localhost"
 #define MYSQL_USER          "root"
-#define MYSQL_PASSWD        "1234"
+#define MYSQL_PASSWD        "root"
 #define MYSQL_DB_NAME       "SmartHomeProject"
 
 SharedMemory sharedMemory(false);
@@ -46,6 +46,12 @@ int main()
 
     // Запуск задачи отправки данных в БД MYSQL
     SQLDataBase MySQLDb(MYSQL_SERVER_NAME, MYSQL_USER, MYSQL_PASSWD, MYSQL_DB_NAME);
+    MySQLDb.createTable(GASBOIL_CONTR_TABLE_NAME);
+    MySQLDb.createTable(WEATH_STAT_TABLE_NAME);
+    MySQLDb.createTable(CONROL_PANEL_TABLE_NAME);
+    controlPanelDB dbData = {25.0f, 43.4f, 752.3f};
+    MySQLDb.sendData(CONROL_PANEL_TABLE_NAME, &dbData);
+    MySQLDb.sendData(CONROL_PANEL_TABLE_NAME, &dbData);
 
     devTask.join();
     terminalTask.join();
