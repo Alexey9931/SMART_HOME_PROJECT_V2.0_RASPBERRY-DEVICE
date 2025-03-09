@@ -24,6 +24,7 @@
 void devicesTask(Logger &log, std::list<std::pair<std::string, std::string>> devicesConfigs);
 void poolingDevice(Logger &log, std::string srcAddr, std::string devAddr);
 void terminalRemoteTask(Logger &log);
+void sqlDataBaseTask(void);
 void findServerIp(char *ip_address);
 
 #endif

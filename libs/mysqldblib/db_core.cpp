@@ -112,18 +112,26 @@ void SQLDataBase::createTable(char *tableName)
 
 void SQLDataBase::sendData(char *tableName, void *data)
 {
-    char query[128] = {};
+    char query[256] = {0};
 
     if (strstr(tableName, CONROL_PANEL_TABLE_NAME) != NULL) {
         controlPanelDB dbData;
         memcpy(&dbData, data, sizeof(dbData));
         sprintf(query,
-            "INSERT INTO ControlPanel(Temperature, Humidity, Pressure) VALUES(%.2f,%.2f,%.2f)",
+            "INSERT INTO `ControlPanel` (`Temperature`, `Humidity`, `Pressure`) VALUES(%.2f,%.2f,%.2f)",
             dbData.temperature, dbData.humidity, dbData.pressure);
     } else if ((strstr(tableName, GASBOIL_CONTR_TABLE_NAME) != NULL)) {
-
+        gasBoilControlDB dbData;
+        memcpy(&dbData, data, sizeof(dbData));
+        sprintf(query,
+            "INSERT INTO `GasBoilerController` (`Status`, `Set temperature`, `Current temperature`, `Temperature range`, `Setpoint source`) VALUES(%d,%.2f,%.2f,%.2f,%d)",
+            dbData.status, dbData.setpointTemp, dbData.currentTemp, dbData.tempRange, dbData.setpointSource);
     } else if ((strstr(tableName, WEATH_STAT_TABLE_NAME) != NULL)) {
-
+        weatherStationDB dbData;
+        memcpy(&dbData, data, sizeof(dbData));
+        sprintf(query,
+            "INSERT INTO `WeatherStation` (`Temperature`, `Humidity`, `Wind speed`, `Wind direction`, `Rainfall`) VALUES(%.2f,%.2f,%.2f,%d,%.2f)",
+            dbData.temperature, dbData.humidity, dbData.windSpeed, dbData.windDirect, dbData.rainFall);
     } else {
         return;
     }

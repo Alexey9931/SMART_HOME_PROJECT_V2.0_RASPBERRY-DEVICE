@@ -23,7 +23,7 @@ typedef struct gasBoilControlDB {
     float   setpointTemp;
     float   currentTemp;
     float   tempRange;
-    float   setpointSource;
+    uint8_t setpointSource;
 }__attribute__((packed)) gasBoilControlDB;
 
 typedef struct weatherStationDB {

@@ -35,7 +35,7 @@ typedef struct deviceSystemTime {
 }__attribute__((packed)) devSysTime;
 
 typedef struct controlPanelRomRegSpace {
-    uint8_t reserv[8];
+    uint8_t reserv[9];
 }__attribute__((packed)) controlPanelRomRegs;
 
 typedef struct controlPanelRamRegSpace {
@@ -47,6 +47,7 @@ typedef struct controlPanelRamRegSpace {
 typedef struct gasBoilerControllerRomRegSpace {
     float           tempSetpoint;
     float           tempRange;
+    uint8_t         tempSource;
 }__attribute__((packed)) gasBoilerRomRegs;
 
 typedef struct gasBoilerControllerRamRegSpace {
@@ -68,7 +69,7 @@ typedef struct windDirectionStruct {
 }__attribute__((packed)) windDirection;
 
 typedef struct weathStatRomRegSpace {
-    uint8_t reserv[8];
+    uint8_t reserv[9];
 }__attribute__((packed)) weathStatRomRegs;
 
 typedef struct weathStatRamRegSpace {
