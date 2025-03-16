@@ -15,9 +15,9 @@
 #define PACK_ERROR  3
 
 //Device's register space
-#define CONTROL_PANEL_REGS_SIZE             122
-#define GAS_BOILER_CONTROLLER_REGS_SIZE     119
-#define WEATH_STATION_REGS_SIZE             127
+#define CONTROL_PANEL_REGS_SIZE             123
+#define GAS_BOILER_CONTROLLER_REGS_SIZE     128
+#define WEATH_STATION_REGS_SIZE             128
 
 //Device's names
 #define CONTROL_PANEL_NAME          "Control Panel"
@@ -51,7 +51,9 @@ typedef struct gasBoilerControllerRomRegSpace {
 }__attribute__((packed)) gasBoilerRomRegs;
 
 typedef struct gasBoilerControllerRamRegSpace {
-    float           temperature;
+    float           gasboilerTemperature;
+    float           contrPanelTemperature;
+    float           currentTemperature;
     float           humidity;
     uint8_t         releStatus;
 }__attribute__((packed)) gasBoilerRamRegs;

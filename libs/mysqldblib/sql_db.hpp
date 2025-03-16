@@ -2,6 +2,7 @@
 #define _SQL_DB_HPP
 
 #include <mysql.h>
+#include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,13 @@
 #define GASBOIL_CONTR_TABLE_NAME    "GasBoilerController"
 #define WEATH_STAT_TABLE_NAME       "WeatherStation"
 #define CONROL_PANEL_TABLE_NAME     "ControlPanel"
+
+#define CONTROL_PANEL_POST_URL      "http://alexgorlov99.ru/smarthomeproject2.0/post-controlpanel.php"
+#define GAS_BOIL_CONTR_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/post-gasboilercontroller.php"
+#define WEATHERSTATION_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/post-weatherstation.php"
+#define TRUNCATETABLES_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/truncate-tables.php"
+
+#define API_KEY "tPmAT5Ab3j7F9&"
 
 typedef struct controlPanelDB {
     float temperature;
@@ -36,12 +44,16 @@ typedef struct weatherStationDB {
 
 class SQLDataBase : public Logger {
     public:
-        MYSQL *conn;
         SQLDataBase(char *serverName, char *user,
                     char *password, char *dataBaseName);
         ~SQLDataBase();
-        void createTable(char *tableName);
-        void sendData(char *tableName, void *data);
+        void createLocalTable(char *tableName);
+        void sendDataToLocalTable(char *tableName, void *data);
+        void sendDataToRemoteTable(char *tableName);
+        void truncateRemoteTables();
+    private:
+        MYSQL *conn;
+        CURL* curl;
 };
 
 #endif

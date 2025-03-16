@@ -286,7 +286,7 @@ void TerminalGraphic::printDeviceDataWindow(Device device) {
         mvwprintw(deviceInfoWindow, 3, 1, "Время работы:");
         mvwprintw(deviceInfoWindow, 3, 18, (std::to_string(device.deviceRegs.commonRamRegsSpace.workHours) + "ч").c_str());
         mvwprintw(deviceInfoWindow, 4, 1, "Температура:");
-        mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.temperature) + "°C").c_str());
+        mvwprintw(deviceInfoWindow, 4, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.currentTemperature) + "°C").c_str());
         mvwprintw(deviceInfoWindow, 5, 1, "Влажность:");
         mvwprintw(deviceInfoWindow, 5, 15, (std::to_string(device.deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.humidity) + "%%").c_str());
         mvwprintw(deviceInfoWindow, 6, 1, "Состояние реле:");

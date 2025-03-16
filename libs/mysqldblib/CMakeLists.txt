@@ -1,5 +1,8 @@
 project(mysql_db)
 
+# sudo apt-get install curl libcurl4-openssl-dev
+find_package(CURL REQUIRED)
+
 set(SOURCE_FILES db_core.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
@@ -24,9 +27,11 @@ link_directories(${LIBMYSQLCLIENT_LIBRARY_DIRS})
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        ${LIBMYSQLCLIENT_INCLUDE_DIRS})
+        ${LIBMYSQLCLIENT_INCLUDE_DIRS}
+        ${CURL_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         ${LIBMYSQLCLIENT_LIBRARIES}
+        ${CURL_LIBRARY}
         log)

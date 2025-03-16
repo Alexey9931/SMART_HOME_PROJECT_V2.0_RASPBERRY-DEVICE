@@ -306,36 +306,43 @@ void terminalRemoteTask(Logger &log) {
 
 void sqlDataBaseTask(void) {
     SQLDataBase MySQLDb(MYSQL_SERVER_NAME, MYSQL_USER, MYSQL_PASSWD, MYSQL_DB_NAME);
-    MySQLDb.createTable(CONROL_PANEL_TABLE_NAME);
-    MySQLDb.createTable(GASBOIL_CONTR_TABLE_NAME);
-    MySQLDb.createTable(WEATH_STAT_TABLE_NAME);
+    MySQLDb.createLocalTable(CONROL_PANEL_TABLE_NAME);
+    MySQLDb.createLocalTable(GASBOIL_CONTR_TABLE_NAME);
+    MySQLDb.createLocalTable(WEATH_STAT_TABLE_NAME);
 
     while (1) {
         for (uint8_t id = 0; id < (sizeof(sharedMemory.shMemoryStruct.device)/sizeof(sharedMemory.shMemoryStruct.device[0])); id++)
         {
             sharedMemoryMut.lock();
-            if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, CONTROL_PANEL_NAME) != NULL) {
-                controlPanelDB dbData = {0};
-                dbData.humidity = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.humidity;
-                dbData.pressure = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.pressure;
-                dbData.temperature = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.temperature;
-                MySQLDb.sendData(CONROL_PANEL_TABLE_NAME, &dbData);
-            } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
-                gasBoilControlDB dbData = {0};
-                dbData.currentTemp = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.temperature;
-                dbData.setpointSource = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSource;
-                dbData.setpointTemp = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint;
-                dbData.status = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus;
-                dbData.tempRange = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempRange;
-                MySQLDb.sendData(GASBOIL_CONTR_TABLE_NAME, &dbData);
-            } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, WEATHER_STATION_NAME)!= NULL) {
-                weatherStationDB dbData = {0};
-                dbData.humidity = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.humidity;
-                dbData.rainFall = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.rainFall;
-                dbData.temperature = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.temperature;
-                dbData.windDirect = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windDirect;
-                dbData.windSpeed = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windSpeed;
-                MySQLDb.sendData(WEATH_STAT_TABLE_NAME, &dbData);
+            if ((sharedMemory.shMemoryStruct.device[id].isInit) &&
+                (sharedMemory.shMemoryStruct.device[id].deviceRegs.commonRomRegsSpace.deviceName[0] != NULL))
+            {
+                if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, CONTROL_PANEL_NAME) != NULL) {
+                    controlPanelDB dbData = {0};
+                    dbData.humidity = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.humidity;
+                    dbData.pressure = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.pressure;
+                    dbData.temperature = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.temperature;
+                    MySQLDb.sendDataToLocalTable(CONROL_PANEL_TABLE_NAME, &dbData);
+                    MySQLDb.sendDataToRemoteTable(CONROL_PANEL_TABLE_NAME);
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
+                    gasBoilControlDB dbData = {0};
+                    dbData.currentTemp = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.currentTemperature;
+                    dbData.setpointSource = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSource;
+                    dbData.setpointTemp = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint;
+                    dbData.status = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus;
+                    dbData.tempRange = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempRange;
+                    MySQLDb.sendDataToLocalTable(GASBOIL_CONTR_TABLE_NAME, &dbData);
+                    MySQLDb.sendDataToRemoteTable(GASBOIL_CONTR_TABLE_NAME);
+                } else if (strstr((const char*)sharedMemory.shMemoryStruct.device[id].deviceName, WEATHER_STATION_NAME)!= NULL) {
+                    weatherStationDB dbData = {0};
+                    dbData.humidity = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.humidity;
+                    dbData.rainFall = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.rainFall;
+                    dbData.temperature = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.temperature;
+                    dbData.windDirect = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windDirect;
+                    dbData.windSpeed = sharedMemory.shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windSpeed;
+                    MySQLDb.sendDataToLocalTable(WEATH_STAT_TABLE_NAME, &dbData);
+                    MySQLDb.sendDataToRemoteTable(WEATH_STAT_TABLE_NAME);
+                }
             }
             sharedMemoryMut.unlock();
         }
