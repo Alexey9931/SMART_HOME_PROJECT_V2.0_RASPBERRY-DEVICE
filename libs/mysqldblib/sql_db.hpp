@@ -17,6 +17,7 @@
 #define GAS_BOIL_CONTR_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/post-gasboilercontroller.php"
 #define WEATHERSTATION_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/post-weatherstation.php"
 #define TRUNCATETABLES_POST_URL     "http://alexgorlov99.ru/smarthomeproject2.0/truncate-tables.php"
+#define UPDATETABLES_POST_URL       "http://alexgorlov99.ru/smarthomeproject2.0/update-tables.php"
 
 #define API_KEY "tPmAT5Ab3j7F9&"
 
@@ -54,6 +55,7 @@ class SQLTable : public Logger {
         void createLocalTable();
         void sendDataToLocalTable(void *data);
         void translateDataToRemoteTable();
+        void deleteDataFromLocalTableForTimePeriod(int days);
     private:
         MYSQL *conn;
         CURL *curl;
@@ -63,17 +65,9 @@ template <typename T>
 void SQLTable<T>::createLocalTable(){
     char query[512] = {};
 
-    sprintf(query, "DROP TABLE IF EXISTS %s", tableName);
-    if (mysql_query(conn, query)) {
-        Logger::systemlog(LOG_ERR, "%s", mysql_error(conn));
-        mysql_close(conn);
-        return;
-    }
-    memset(query, NULL, sizeof(query));
-
     if (std::is_same<T, controlPanelDB>::value){
         strcat(query,
-            "CREATE TABLE `ControlPanel` ("
+            "CREATE TABLE IF NOT EXISTS `ControlPanel` ("
             "`id` INT PRIMARY KEY AUTO_INCREMENT,"
             "`Temperature` FLOAT DEFAULT NULL,"
             "`Humidity` FLOAT DEFAULT NULL,"
@@ -82,7 +76,7 @@ void SQLTable<T>::createLocalTable(){
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     } else if (std::is_same<T, gasBoilControlDB>::value) {
         strcat(query,
-            "CREATE TABLE `GasBoilerController` ("
+            "CREATE TABLE IF NOT EXISTS `GasBoilerController` ("
             "`id` INT PRIMARY KEY AUTO_INCREMENT,"
             "`Status` INT DEFAULT NULL,"
             "`Set temperature` FLOAT DEFAULT NULL,"
@@ -93,7 +87,7 @@ void SQLTable<T>::createLocalTable(){
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     } else if (std::is_same<T, weatherStationDB>::value) {
         strcat(query,
-            "CREATE TABLE `WeatherStation` ("
+            "CREATE TABLE IF NOT EXISTS `WeatherStation` ("
             "`id` INT PRIMARY KEY AUTO_INCREMENT,"
             "`Temperature` FLOAT DEFAULT NULL,"
             "`Humidity` FLOAT DEFAULT NULL,"
@@ -252,7 +246,7 @@ void SQLTable<gasBoilControlDB>::translateDataToRemoteTable() {
 
 template <>
 void SQLTable<weatherStationDB>::translateDataToRemoteTable() {
-    char postData[512] = {0};
+    char postData[256] = {0};
     char query[64] = {0};
 
     sprintf(query, "SELECT * FROM `%s`", tableName);
@@ -292,6 +286,19 @@ void SQLTable<weatherStationDB>::translateDataToRemoteTable() {
     }
 }
 
+template <typename T>
+void SQLTable<T>::deleteDataFromLocalTableForTimePeriod(int days) {
+    char query[256] = {};
+
+    sprintf(query, "DELETE FROM `%s` WHERE `Time stamp` < DATE_SUB(NOW(), INTERVAL %d DAY)", tableName, days);
+    if (mysql_query(conn, query)) {
+        Logger::systemlog(LOG_ERR, "%s", mysql_error(conn));
+        mysql_close(conn);
+        return;
+    }
+    memset(query, NULL, sizeof(query));
+}
+
 class SQLDataBase : public Logger {
     public:
         SQLTable<controlPanelDB> *controlPanelTable;
@@ -301,6 +308,7 @@ class SQLDataBase : public Logger {
                     char *password, char *dataBaseName);
         ~SQLDataBase();
         void truncateRemoteTables();
+        void deleteDataFromRemoteTablesForTimePeriod(int days);
     private:
         MYSQL *conn;
         CURL *curl;

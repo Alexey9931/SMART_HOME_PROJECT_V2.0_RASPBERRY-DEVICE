@@ -27,16 +27,7 @@ SQLDataBase::SQLDataBase(char *serverName,
     mysql_query(conn, query);
     memset(query, NULL, sizeof(query));
 
-    sprintf(query, "DROP DATABASE IF EXISTS %s", dataBaseName);
-    if (mysql_query(conn, query))
-    {
-        Logger::systemlog(LOG_ERR, "%s", mysql_error(conn));
-        mysql_close(conn);
-        return;
-    }
-    memset(query, NULL, sizeof(query));
-
-    sprintf(query, "CREATE DATABASE %s", dataBaseName);
+    sprintf(query, "CREATE DATABASE IF NOT EXISTS %s", dataBaseName);
     if (mysql_query(conn, query))
     {
         Logger::systemlog(LOG_ERR, "%s", mysql_error(conn));
@@ -49,7 +40,7 @@ SQLDataBase::SQLDataBase(char *serverName,
     mysql_query(conn, query);
     memset(query, NULL, sizeof(query));
 
-    Logger::systemlog(LOG_INFO, "DataBase \"%s\" has been succesfully initialized!", dataBaseName);
+    Logger::systemlog(LOG_INFO, "DataBase \"%s\" has been created!", dataBaseName);
 
     curl = curl_easy_init();
     
@@ -88,6 +79,22 @@ void SQLDataBase::truncateRemoteTables() {
     sprintf(postData, "api_key=%s", API_KEY);
 
     curl_easy_setopt(curl, CURLOPT_URL, TRUNCATETABLES_POST_URL);
+
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    if(res != CURLE_OK) {
+        Logger::systemlog(LOG_ERR, "CURL POST request failed:%s", curl_easy_strerror(res));
+    }
+}
+
+void SQLDataBase::deleteDataFromRemoteTablesForTimePeriod(int days) {
+    char postData[32] = {0};
+
+    sprintf(postData, "api_key=%s&days=%d", API_KEY, days);
+
+    curl_easy_setopt(curl, CURLOPT_URL, UPDATETABLES_POST_URL);
 
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
 

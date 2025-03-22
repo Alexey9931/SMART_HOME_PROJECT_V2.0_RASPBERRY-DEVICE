@@ -309,6 +309,12 @@ void sqlDataBaseTask(void) {
     MySQLDb.controlPanelTable->createLocalTable();
     MySQLDb.gasBoilControlTable->createLocalTable();
     MySQLDb.weatherStationTable->createLocalTable();
+    MySQLDb.controlPanelTable->deleteDataFromLocalTableForTimePeriod(7);
+    MySQLDb.gasBoilControlTable->deleteDataFromLocalTableForTimePeriod(7);
+    MySQLDb.weatherStationTable->deleteDataFromLocalTableForTimePeriod(7);
+    MySQLDb.controlPanelTable->translateDataToRemoteTable();
+    MySQLDb.gasBoilControlTable->translateDataToRemoteTable();
+    MySQLDb.weatherStationTable->translateDataToRemoteTable();
 
     while (1) {
         for (uint8_t id = 0; id < (sizeof(sharedMemory.shMemoryStruct.device)/sizeof(sharedMemory.shMemoryStruct.device[0])); id++)
@@ -346,6 +352,10 @@ void sqlDataBaseTask(void) {
             }
             sharedMemoryMut.unlock();
         }
-        sleep(10);
+        MySQLDb.controlPanelTable->deleteDataFromLocalTableForTimePeriod(7);
+        MySQLDb.gasBoilControlTable->deleteDataFromLocalTableForTimePeriod(7);
+        MySQLDb.weatherStationTable->deleteDataFromLocalTableForTimePeriod(7);
+        MySQLDb.deleteDataFromRemoteTablesForTimePeriod(7);
+        sleep(300);
     }
 }
