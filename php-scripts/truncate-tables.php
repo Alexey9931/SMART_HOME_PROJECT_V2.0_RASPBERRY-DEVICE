@@ -16,13 +16,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die("Connection failed: " . $conn->connect_error);
         } 
         
-        $sql = "DELETE FROM `ControlPanel`";
+        $sql = "TRUNCATE `ControlPanel`";
         $conn->query($sql);
 
-        $sql = "DELETE FROM `GasBoilerController`";
+        $sql = "TRUNCATE `GasBoilerController`";
         $conn->query($sql);
 
-        $sql = "DELETE FROM `WeatherStation`";
+        $sql = "TRUNCATE `WeatherStation`";
         $conn->query($sql);
 
         $conn->close();
