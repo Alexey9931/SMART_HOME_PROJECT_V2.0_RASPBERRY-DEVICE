@@ -1,7 +1,7 @@
 <?php
 
 $servername = "localhost";
-$dbname = "smarthomeproject2.0";
+$dbname = "smarthomeproject_v2.0";
 $username = "alexey";
 $password = "alex281299";
 $api_key_value = "tPmAT5Ab3j7F9";

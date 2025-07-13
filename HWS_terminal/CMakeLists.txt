@@ -4,6 +4,7 @@ set(CURSES_NEED_NCURSES TRUE)
 set(CURSES_NEED_WIDE TRUE)
 include(FindCurses)
 
+# sudo apt-get install libncurses5-dev libncursesw5-dev
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 

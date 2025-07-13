@@ -15,6 +15,7 @@ target_include_directories(${PROJECT_NAME}
 
 # sudo apt-get install pkg-config
 # sudo apt-get -y install libmysqlclient-dev
+# sudo apt-get install mysql-server
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 include(FindPkgConfig)
 pkg_check_modules(LIBMYSQLCLIENT REQUIRED mysqlclient)

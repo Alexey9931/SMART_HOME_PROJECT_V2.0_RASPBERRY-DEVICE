@@ -317,6 +317,9 @@ void sqlDataBaseTask(void) {
     MySQLDb.weatherStationTable->translateDataToRemoteTable();
 
     while (1) {
+        if (MySQLDb.deferedTruncateRemoteTables) {
+            MySQLDb.truncateRemoteTables();
+        }
         for (uint8_t id = 0; id < (sizeof(sharedMemory.shMemoryStruct.device)/sizeof(sharedMemory.shMemoryStruct.device[0])); id++)
         {
             sharedMemoryMut.lock();

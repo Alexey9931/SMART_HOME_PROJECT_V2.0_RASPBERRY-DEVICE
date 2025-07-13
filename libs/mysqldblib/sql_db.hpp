@@ -301,6 +301,7 @@ void SQLTable<T>::deleteDataFromLocalTableForTimePeriod(int days) {
 
 class SQLDataBase : public Logger {
     public:
+        bool deferedTruncateRemoteTables = false;
         SQLTable<controlPanelDB> *controlPanelTable;
         SQLTable<gasBoilControlDB> *gasBoilControlTable;
         SQLTable<weatherStationDB> *weatherStationTable;

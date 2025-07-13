@@ -86,6 +86,9 @@ void SQLDataBase::truncateRemoteTables() {
 
     if(res != CURLE_OK) {
         Logger::systemlog(LOG_ERR, "CURL POST request failed:%s", curl_easy_strerror(res));
+        deferedTruncateRemoteTables = true;
+    } else {
+        deferedTruncateRemoteTables = false;
     }
 }
 
