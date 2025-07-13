@@ -1,6 +1,10 @@
 project(hws_kernel)
 
-set(SOURCE_FILES config_parser.cpp main.cpp)
+set(SOURCE_FILES config_parser.cpp
+                 main.cpp
+                 poolDevicesTask.cpp
+                 remoteTerminalTask.cpp
+                 sqlDataBaseTask.cpp)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
