@@ -51,7 +51,7 @@ class SQLTable : public Logger {
             tableName{tableName}, conn{conn}, curl{curl} { }
         T tableStruct;
         char *tableName;
-        int rawid = 0;
+        static int rawid;
         void createLocalTable();
         void sendDataToLocalTable(void *data);
         void translateDataToRemoteTable();
@@ -60,6 +60,9 @@ class SQLTable : public Logger {
         MYSQL *conn;
         CURL *curl;
 };
+
+template <typename T>
+int SQLTable<T>::rawid = 0;
 
 template <typename T>
 void SQLTable<T>::createLocalTable(){
@@ -181,7 +184,7 @@ void SQLTable<controlPanelDB>::translateDataToRemoteTable() {
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(result)))
     {
-        if (atoi((char*)row[0]) > rawid)
+        if (atoi(row[0]) > rawid)
         {
             curl_easy_setopt(curl, CURLOPT_URL, CONTROL_PANEL_POST_URL);
             sprintf(postData,
@@ -197,7 +200,7 @@ void SQLTable<controlPanelDB>::translateDataToRemoteTable() {
                 return;
             }
             memset(postData, NULL, sizeof(postData));
-            rawid++;
+            rawid = atoi(row[0]);
         }
     }
 }
@@ -223,7 +226,7 @@ void SQLTable<gasBoilControlDB>::translateDataToRemoteTable() {
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(result)))
     {
-        if (atoi((char*)row[0]) > rawid)
+        if (atoi(row[0]) > rawid)
         {
             curl_easy_setopt(curl, CURLOPT_URL, GAS_BOIL_CONTR_POST_URL);
             sprintf(postData,
@@ -239,7 +242,7 @@ void SQLTable<gasBoilControlDB>::translateDataToRemoteTable() {
                 return;
             }
             memset(postData, NULL, sizeof(postData));
-            rawid++;
+            rawid = atoi(row[0]);
         }
     }
 }
@@ -265,7 +268,7 @@ void SQLTable<weatherStationDB>::translateDataToRemoteTable() {
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(result)))
     {
-        if (atoi((char*)row[0]) > rawid)
+        if (atoi(row[0]) > rawid)
         {
             curl_easy_setopt(curl, CURLOPT_URL, WEATHERSTATION_POST_URL);
             sprintf(postData,
@@ -281,7 +284,7 @@ void SQLTable<weatherStationDB>::translateDataToRemoteTable() {
                 return;
             }
             memset(postData, NULL, sizeof(postData));
-            rawid++;
+            rawid = atoi(row[0]);
         }
     }
 }
