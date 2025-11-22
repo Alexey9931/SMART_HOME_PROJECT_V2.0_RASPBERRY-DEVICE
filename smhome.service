@@ -1,0 +1,8 @@
+[Unit]
+Description=SmartHomeProject
+
+[Service]
+ExecStart=/home/raspberry/SMART_HOME_PROJECT_V2.0_RASPBERRY-DEVICE/autorun.sh
+
+[Install]
+WantedBy=multi-user.target
