@@ -20,6 +20,7 @@ uint8_t SharedMemory::copyToSharedMemory(void) {
     ftruncate(shmFd, sizeof(shMemory));
     uint8_t *msg_ptr = (uint8_t*)mmap(0, sizeof(shMemory), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
     if (msg_ptr == (uint8_t*)-1 ) {
+        sem_post(shMemSem);
         return 1;
     }
     memcpy(msg_ptr, &shMemoryStruct, sizeof(shMemory));
@@ -34,6 +35,7 @@ uint8_t SharedMemory::copyFromSharedMemory(void) {
     ftruncate(shmFd, sizeof(shMemory));
     uint8_t *msg_ptr = (uint8_t*)mmap(0, sizeof(shMemory), PROT_READ | PROT_WRITE, MAP_SHARED, shmFd, 0);
     if (msg_ptr == (uint8_t*)-1 ) {
+        sem_post(shMemSem);
         return 1;
     }
     memcpy(&shMemoryStruct, msg_ptr, sizeof(shMemory));
