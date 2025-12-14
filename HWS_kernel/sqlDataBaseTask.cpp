@@ -68,6 +68,8 @@ void SqlDataBaseTask::sqlDataBaseTask() {
                 } else {
                     sharedMemoryMut->unlock();
                 }
+            } else {
+                sharedMemoryMut->unlock();
             }
         }
         MySQLDb.controlPanelTable->deleteDataFromLocalTableForTimePeriod(7);
