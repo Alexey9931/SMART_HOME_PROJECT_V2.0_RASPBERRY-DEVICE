@@ -42,6 +42,7 @@ void SqlDataBaseTask::sqlDataBaseTask() {
                     dbData.humidity = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.humidity;
                     dbData.pressure = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.pressure;
                     dbData.temperature = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.contPanelRamRegSpace.temperature;
+                    sharedMemoryMut->unlock();
                     MySQLDb.controlPanelTable->sendDataToLocalTable(&dbData);
                     MySQLDb.controlPanelTable->translateDataToRemoteTable();
                 } else if (strstr((const char*)sharedMemory->shMemoryStruct.device[id].deviceName, GAS_BOILER_CONTROLLER_NAME)!= NULL) {
@@ -51,6 +52,7 @@ void SqlDataBaseTask::sqlDataBaseTask() {
                     dbData.setpointTemp = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempSetpoint;
                     dbData.status = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.gasBoilerContRamRegSpace.releStatus;
                     dbData.tempRange = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRomRegsSpace.gasBoilerContRomRegSpace.tempRange;
+                    sharedMemoryMut->unlock();
                     MySQLDb.gasBoilControlTable->sendDataToLocalTable(&dbData);
                     MySQLDb.gasBoilControlTable->translateDataToRemoteTable();
                 } else if (strstr((const char*)sharedMemory->shMemoryStruct.device[id].deviceName, WEATHER_STATION_NAME)!= NULL) {
@@ -60,11 +62,13 @@ void SqlDataBaseTask::sqlDataBaseTask() {
                     dbData.temperature = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.temperature;
                     dbData.windDirect = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windDirect;
                     dbData.windSpeed = sharedMemory->shMemoryStruct.device[id].deviceRegs.deviceRamRegsSpace.weathStatRamRegSpace.windSpeed;
+                    sharedMemoryMut->unlock();
                     MySQLDb.weatherStationTable->sendDataToLocalTable(&dbData);
                     MySQLDb.weatherStationTable->translateDataToRemoteTable();
+                } else {
+                    sharedMemoryMut->unlock();
                 }
             }
-            sharedMemoryMut->unlock();
         }
         MySQLDb.controlPanelTable->deleteDataFromLocalTableForTimePeriod(7);
         MySQLDb.gasBoilControlTable->deleteDataFromLocalTableForTimePeriod(7);

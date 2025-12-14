@@ -55,8 +55,6 @@ void PoolDevicesTask::poolDevice(std::string srcAddr, std::string devAddr) {
         Logger::systemlog(LOG_ERR, "[%s]: Socket creation error!", devAddr.c_str());
     }
 
-    signal(SIGPIPE, SIG_IGN);
-
     struct timeval tv;
     tv.tv_sec = 22;
 

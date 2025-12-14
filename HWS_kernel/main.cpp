@@ -23,6 +23,8 @@ int main()
         log.systemlog(LOG_ERR, "Error while copying data to shared memory!"); 
     }
 
+    signal(SIGPIPE, SIG_IGN);
+
     // Парсинг конфигурационного файла
     Parser configs_parser("/usr/local/sm_home/kernel_configs.ini");
     if (!configs_parser.getIsOpened()) {

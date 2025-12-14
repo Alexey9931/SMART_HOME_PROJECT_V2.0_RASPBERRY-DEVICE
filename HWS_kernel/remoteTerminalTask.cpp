@@ -23,7 +23,6 @@ void RemoteTerminalTask::remoteTerminalTask() {
         Logger::systemlog(LOG_ERR, "[%s]:Error to open socket!", __FUNCTION__);
         return;
     }
-    signal(SIGPIPE, SIG_IGN);
 
     struct timeval rxtimeout;
     rxtimeout.tv_sec = 5;
