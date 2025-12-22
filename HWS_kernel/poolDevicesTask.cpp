@@ -95,6 +95,7 @@ void PoolDevicesTask::poolDevice(std::string srcAddr, std::string devAddr) {
                     if ((sharedMemory->shMemoryStruct.device[deviceID].socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                         Logger::systemlog(LOG_ERR, "[%s]: Socket creation error!", devAddr.c_str());
                     }
+                    setsockopt(sharedMemory->shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
                     setsockopt(sharedMemory->shMemoryStruct.device[deviceID].socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
                     if (connect(sharedMemory->shMemoryStruct.device[deviceID].socket_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
                         Logger::systemlog(LOG_ERR, "[%s]: Error connection!", devAddr.c_str());

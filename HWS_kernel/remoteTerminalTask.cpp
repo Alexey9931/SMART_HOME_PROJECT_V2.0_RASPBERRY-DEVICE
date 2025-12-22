@@ -24,10 +24,13 @@ void RemoteTerminalTask::remoteTerminalTask() {
         return;
     }
 
-    struct timeval rxtimeout;
-    rxtimeout.tv_sec = 5;
-    rxtimeout.tv_usec = 0;
-    if (setsockopt(listener, SOL_SOCKET, SO_RCVTIMEO, &rxtimeout, sizeof(rxtimeout)) < 0) {
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+    if (setsockopt(listener, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        Logger::systemlog(LOG_ERR, "[%s]:Error to set socket options!", __FUNCTION__);
+    }
+    if (setsockopt(listener, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
         Logger::systemlog(LOG_ERR, "[%s]:Error to set socket options!", __FUNCTION__);
     }
     
