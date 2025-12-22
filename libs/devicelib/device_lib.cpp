@@ -16,7 +16,7 @@ uint8_t Device::writeCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
 
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1, 0);
     if (len < 0) {
         return RX_ERROR;
     }
@@ -66,7 +66,7 @@ uint8_t Device::readCmd(uint16_t regAddr, uint16_t valueSize, uint8_t* value) {
 
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + valueSize);
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + valueSize, 0);
     if (len < 0) {
         return RX_ERROR;
     }
@@ -117,7 +117,7 @@ uint8_t Device::configCmd(uint16_t regAddr, void *value, uint16_t valueSize) {
 
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1, 0);
     if (len < 0) {
         return RX_ERROR;
     }
@@ -167,7 +167,7 @@ uint8_t Device::resetCmd(void) {
 
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1);
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + 1, 0);
     if (len < 0) {
         return RX_ERROR;
     }
@@ -213,7 +213,7 @@ uint8_t Device::typeCmd(void) {
     }
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace));
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace), 0);
     if (len < 0) {
         return RX_ERROR;
     }
@@ -258,7 +258,7 @@ uint8_t Device::initCmd(void) {
     }
     numTxPack++;
 
-    int len = read(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace));
+    int len = recv(socket_fd, requestReplyIterat.rxBuf, sizeof(ModbusHeader) + sizeof(ModbusTail) + sizeof(devRegsSpace), 0);
     if (len < 0) {
         return RX_ERROR;
     }
